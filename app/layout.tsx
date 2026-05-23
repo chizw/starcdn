@@ -4,12 +4,48 @@ import './styles/home.css';
 import './styles/not-found.css';
 import './styles/waf.css';
 
+const siteUrl = 'https://jscdn.wuxit.cn';
+
 export const metadata: Metadata = {
-  title: 'StarCDN - 信网免费 CDN 加速服务',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'StarCDN - 免费公共 CDN 镜像加速服务',
+    template: '%s | StarCDN',
+  },
   description: '信网开源项目免费CDN加速服务 - 提供Jsdelivr、Gravatar等公共库的稳定、快速、免费CDN镜像加速。支持HTTPS(SSL)和HTTP/3.0协议，全球多节点部署，提升网站加载速度。',
-  keywords: ['免费CDN', '前端加速', 'Jsdelivr镜像', 'Gravatar镜像', 'HTTP3加速', '静态资源加速'],
+  keywords: ['免费CDN', '公共库CDN', '前端加速', 'Jsdelivr镜像', 'Gravatar镜像', 'cdnjs镜像', 'HTTP3加速', '静态资源加速'],
   authors: [{ name: '信网' }],
   creator: '信网',
+  publisher: '信网',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'zh_CN',
+    url: '/',
+    siteName: 'StarCDN',
+    title: 'StarCDN - 免费公共 CDN 镜像加速服务',
+    description: '为 Jsdelivr、Gravatar、cdnjs 等公共资源提供稳定、快速、免费的 CDN 镜像加速服务，支持 HTTPS、HTTP/2 与 HTTP/3。',
+    images: [{ url: '/star/images/logo.png', width: 156, height: 48, alt: 'StarCDN' }],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'StarCDN - 免费公共 CDN 镜像加速服务',
+    description: '稳定、快速、轻量的公共资源 CDN 镜像加速服务。',
+    images: ['/star/images/logo.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
   icons: { icon: '/favicon.ico' },
 };
 
