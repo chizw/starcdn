@@ -1,0 +1,562 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+
+const stats = [
+  { value: '∞', label: '中国节点', tone: 'blue' },
+  { value: '99.9%', label: '服务可用性', tone: 'green' },
+  { value: '30ms', label: '平均响应', tone: 'cyan' },
+  { value: 'HTTP/3', label: '现代协议', tone: 'violet' },
+];
+
+const services = [
+  { name: 'jsDelivr 镜像', path: '/npm/package@version/file', icon: '/star/images/m-jsdelivr.png' },
+  { name: 'Gravatar 镜像', path: '/avatar/hash?s=96', icon: '/star/images/m-gravater.png' },
+  { name: 'Google 静态库', path: '/ajax/libs/name/version/file', icon: '/star/images/m-google.png' },
+  { name: '静态资源托管', path: '/static/project/file', icon: '/star/images/m-static.png' },
+];
+
+const features = [
+  { title: '纯静态优先', desc: '基于 Astro 默认静态输出，页面首屏无需客户端框架参与，天然拥有更低运行成本。' },
+  { title: '国内体验优化', desc: '面向公共前端资源与开源项目场景优化，减少跨境依赖造成的资源加载波动。' },
+  { title: '安全边界清晰', desc: '核心页面移除传统脚本堆叠，将交互降到最低，降低维护复杂度与潜在风险。' },
+  { title: '现代视觉系统', desc: '使用统一设计变量、响应式栅格与玻璃拟态卡片，保持清爽、可信赖的技术品牌观感。' },
+  { title: 'SEO 友好', desc: 'Astro 在构建时生成完整 HTML，搜索引擎与低性能设备都能稳定读取内容。' },
+  { title: '可组件化扩展', desc: 'Header、Footer、布局和页面内容拆分，后续新增状态页、文档页更容易复用。' },
+];
+
+const steps = [
+  { title: '替换域名', code: 'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js\nhttps://jscdn.wuxit.cn/npm/vue@3/dist/vue.global.prod.js' },
+  { title: '锁定版本', code: 'https://jscdn.wuxit.cn/npm/axios@1.6.8/dist/axios.min.js' },
+  { title: '生产引用', code: '<script defer src="https://jscdn.wuxit.cn/npm/package@version/file"></script>' },
+];
+
+const faqs = [
+  { q: 'StarCDN 适合什么场景？', a: '适合前端公共库、头像资源、开源项目 Demo、文档站与轻量静态资源加速。' },
+  { q: '是否需要注册才能使用？', a: '公共镜像能力可以直接通过 URL 使用，业务型 CDN 能力可前往信网智能 CDN 了解。' },
+  { q: '为什么迁移到 Astro？', a: 'Astro 更适合内容型与静态展示页面，组件化开发体验更好，最终产物也更轻。' },
+];
+---
+
+<BaseLayout title="StarCDN - 信网免费 CDN 加速服务">
+  <SiteHeader />
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="pill">Astro Powered · Static First</span>
+          <h1>让公共前端资源，稳定抵达每一次访问。</h1>
+          <p>StarCDN 面向开源项目与静态资源访问场景，提供轻量、快速、免费的 CDN 镜像加速能力，并以 Astro 重构为更现代的静态站点体验。</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#usage">查看接入方式</a>
+            <a class="button button-ghost" href="#features">了解优化能力</a>
+          </div>
+        </div>
+        <div class="hero-panel" aria-label="StarCDN 服务概览">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="panel-card main-card">
+            <span>jscdn.wuxit.cn</span>
+            <strong>Edge Ready</strong>
+            <small>HTTP/3 · TLS · Static Assets</small>
+          </div>
+          <div class="panel-card mini-card top">Cache HIT 98%</div>
+          <div class="panel-card mini-card bottom">P95 30ms</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats container" aria-label="核心指标">
+      {stats.map((item) => (
+        <article class={`stat-card ${item.tone}`}>
+          <strong>{item.value}</strong>
+          <span>{item.label}</span>
+        </article>
+      ))}
+    </section>
+
+    <section id="features" class="section-block container">
+      <div class="section-head">
+        <p class="section-eyebrow">Features</p>
+        <h2 class="section-title">从传统页面升级为 Astro 组件化体验</h2>
+        <p class="section-desc">页面内容、视觉层级与公共布局重新组织，减少旧式 HTML/CSS/JS 拼装带来的维护负担。</p>
+      </div>
+      <div class="feature-grid">
+        {features.map((feature, index) => (
+          <article class="feature-card">
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <h3>{feature.title}</h3>
+            <p>{feature.desc}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="services-wrap">
+      <div class="container section-block">
+        <div class="section-head center">
+          <p class="section-eyebrow">Mirrors</p>
+          <h2 class="section-title">常用镜像入口</h2>
+          <p class="section-desc">保留原有服务定位，用更清晰的卡片呈现资源类型、路径规则与接入入口。</p>
+        </div>
+        <div class="service-grid">
+          {services.map((service) => (
+            <article class="service-card">
+              <img src={service.icon} width="72" height="72" alt={service.name} loading="lazy" />
+              <h3>{service.name}</h3>
+              <code>{service.path}</code>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section id="usage" class="section-block container usage-grid">
+      <div>
+        <p class="section-eyebrow">Usage</p>
+        <h2 class="section-title">三步完成接入</h2>
+        <p class="section-desc">使用方式保持 CDN 直链思路，但页面层不再依赖 Bootstrap、动画库或运行时 DOM 脚本。</p>
+      </div>
+      <div class="steps">
+        {steps.map((step, index) => (
+          <article class="step-card">
+            <div class="step-index">{index + 1}</div>
+            <div>
+              <h3>{step.title}</h3>
+              <pre><code>{step.code}</code></pre>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section id="network" class="network-section">
+      <div class="container network-card">
+        <div>
+          <p class="section-eyebrow">Network</p>
+          <h2 class="section-title">为静态资源访问构建更稳的边缘层</h2>
+          <p class="section-desc">通过静态化站点与 CDN 镜像能力结合，减少页面自身负载，把性能预算留给真正需要加速的业务资源。</p>
+        </div>
+        <div class="network-visual">
+          <span>Origin</span>
+          <span>Cache</span>
+          <span>User</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" class="section-block container faq-grid">
+      <div>
+        <p class="section-eyebrow">FAQ</p>
+        <h2 class="section-title">常见问题</h2>
+      </div>
+      <div class="faq-list">
+        {faqs.map((item) => (
+          <article>
+            <h3>{item.q}</h3>
+            <p>{item.a}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  </main>
+  <SiteFooter />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 6.4rem 0 3rem;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
+    gap: 3rem;
+    align-items: center;
+  }
+
+  .hero-copy h1 {
+    max-width: 760px;
+    margin: 1.2rem 0 1.2rem;
+    font-size: clamp(3.1rem, 8vw, 6.8rem);
+    line-height: 0.96;
+    letter-spacing: -0.08em;
+  }
+
+  .hero-copy p {
+    max-width: 680px;
+    margin: 0;
+    color: var(--muted);
+    font-size: clamp(1.04rem, 2vw, 1.22rem);
+    line-height: 1.9;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    margin-top: 2rem;
+  }
+
+  .hero-panel {
+    position: relative;
+    min-height: 460px;
+    border: 1px solid var(--line);
+    border-radius: 44px;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(219, 234, 254, 0.48)),
+      radial-gradient(circle at 20% 20%, rgba(6, 182, 212, 0.28), transparent 14rem);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .hero-panel::before {
+    position: absolute;
+    inset: 28px;
+    border: 1px dashed rgba(37, 99, 235, 0.24);
+    border-radius: 34px;
+    content: '';
+  }
+
+  .orbit {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(3px);
+  }
+
+  .orbit-one {
+    width: 220px;
+    height: 220px;
+    top: 52px;
+    right: 44px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.72), rgba(6, 182, 212, 0.36));
+  }
+
+  .orbit-two {
+    width: 150px;
+    height: 150px;
+    left: 46px;
+    bottom: 56px;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.52), rgba(16, 185, 129, 0.34));
+  }
+
+  .panel-card {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(18px);
+  }
+
+  .main-card {
+    right: 54px;
+    bottom: 78px;
+    width: min(310px, calc(100% - 88px));
+    padding: 1.5rem;
+  }
+
+  .main-card span,
+  .main-card small {
+    display: block;
+    color: var(--muted);
+    font-weight: 800;
+  }
+
+  .main-card strong {
+    display: block;
+    margin: 0.55rem 0;
+    color: var(--brand-strong);
+    font-size: 2.2rem;
+    letter-spacing: -0.05em;
+  }
+
+  .mini-card {
+    padding: 0.84rem 1rem;
+    color: var(--brand-strong);
+    font-weight: 900;
+  }
+
+  .mini-card.top {
+    top: 64px;
+    left: 48px;
+  }
+
+  .mini-card.bottom {
+    right: 42px;
+    top: 192px;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .stat-card {
+    padding: 1.35rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.74);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .stat-card strong,
+  .stat-card span {
+    display: block;
+  }
+
+  .stat-card strong {
+    color: var(--brand-strong);
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
+    letter-spacing: -0.05em;
+  }
+
+  .stat-card span {
+    margin-top: 0.36rem;
+    color: var(--muted);
+    font-weight: 800;
+  }
+
+  .section-block {
+    padding: 6rem 0;
+  }
+
+  .section-head {
+    max-width: 760px;
+  }
+
+  .section-head.center {
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .feature-card,
+  .service-card,
+  .step-card,
+  .faq-list article {
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.76);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(18px);
+  }
+
+  .feature-card {
+    min-height: 230px;
+    padding: 1.5rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .feature-card span {
+    color: rgba(37, 99, 235, 0.28);
+    font-size: 2.4rem;
+    font-weight: 950;
+    letter-spacing: -0.08em;
+  }
+
+  .feature-card h3,
+  .service-card h3,
+  .step-card h3,
+  .faq-list h3 {
+    margin: 1rem 0 0.65rem;
+    font-size: 1.15rem;
+  }
+
+  .feature-card p,
+  .faq-list p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .services-wrap {
+    background: linear-gradient(180deg, rgba(239, 246, 255, 0), rgba(219, 234, 254, 0.52), rgba(239, 246, 255, 0));
+  }
+
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .service-card {
+    display: grid;
+    justify-items: center;
+    padding: 1.5rem 1rem;
+    border-radius: 24px;
+    text-align: center;
+  }
+
+  .service-card img {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+  }
+
+  .service-card code {
+    max-width: 100%;
+    padding: 0.5rem 0.7rem;
+    border-radius: 12px;
+    color: var(--brand-strong);
+    background: rgba(37, 99, 235, 0.08);
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+  }
+
+  .usage-grid {
+    display: grid;
+    grid-template-columns: 0.82fr 1.18fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .steps {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .step-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 24px;
+  }
+
+  .step-index {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border-radius: 16px;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--brand), var(--cyan));
+    font-weight: 900;
+  }
+
+  .step-card h3 {
+    margin-top: 0.2rem;
+  }
+
+  pre {
+    margin: 0;
+    padding: 1rem;
+    border-radius: 16px;
+    color: #dbeafe;
+    background: #0f172a;
+    overflow-x: auto;
+  }
+
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    line-height: 1.7;
+  }
+
+  .network-section {
+    padding: 2rem 0;
+  }
+
+  .network-card {
+    display: grid;
+    grid-template-columns: 1fr 0.9fr;
+    gap: 2rem;
+    align-items: center;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 36px;
+    color: #ffffff;
+    background:
+      radial-gradient(circle at top right, rgba(6, 182, 212, 0.48), transparent 18rem),
+      linear-gradient(135deg, #172554, #1d4ed8 52%, #0891b2);
+    box-shadow: var(--shadow);
+  }
+
+  .network-card .section-title,
+  .network-card .section-eyebrow,
+  .network-card .section-desc {
+    color: #ffffff;
+  }
+
+  .network-card .section-desc {
+    opacity: 0.84;
+  }
+
+  .network-visual {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+  }
+
+  .network-visual span {
+    min-height: 140px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.14);
+    font-weight: 900;
+    backdrop-filter: blur(16px);
+  }
+
+  .faq-grid {
+    display: grid;
+    grid-template-columns: 0.75fr 1.25fr;
+    gap: 2rem;
+  }
+
+  .faq-list {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .faq-list article {
+    padding: 1.25rem;
+    border-radius: 22px;
+  }
+
+  @media (max-width: 960px) {
+    .hero-grid,
+    .usage-grid,
+    .network-card,
+    .faq-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .feature-grid,
+    .service-grid,
+    .stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 620px) {
+    .hero {
+      padding-top: 4rem;
+    }
+
+    .hero-panel {
+      min-height: 360px;
+    }
+
+    .feature-grid,
+    .service-grid,
+    .stats,
+    .network-visual {
+      grid-template-columns: 1fr;
+    }
+
+    .section-block {
+      padding: 4rem 0;
+    }
+  }
+</style>
