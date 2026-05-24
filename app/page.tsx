@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 
 const navItems = [
@@ -80,7 +79,7 @@ export default function Home() {
       <div className="home-noise" />
       <header className="site-header">
         <Link className="brand" href="/" aria-label="StarCDN 首页">
-          <Image src="/star/images/logo.png" width={156} height={48} alt="StarCDN" priority />
+          <img src="/star/images/logo.png" width={156} height={48} alt="StarCDN" fetchPriority="high" />
         </Link>
         <nav className="site-nav" aria-label="主导航">
           {navItems.map((item) => (
@@ -134,7 +133,7 @@ export default function Home() {
         <div className="service-grid">
           {services.map((service) => (
             <article key={service.name} className="service-card">
-              <Image src={service.image} width={76} height={76} alt={`${service.name} CDN 镜像加速`} loading="lazy" />
+              <img src={service.image} width={76} height={76} alt={`${service.name} CDN 镜像加速`} loading="lazy" />
               <h3>{service.name}</h3>
               <p>{service.desc}</p>
             </article>
@@ -213,8 +212,8 @@ export default function Home() {
           <h2>与开放生态共同运行</h2>
         </div>
         <div className="partners-grid">
-          <Image src="/img/cloudflare.svg" width={180} height={58} alt="Cloudflare CDN 基础设施" loading="lazy" />
-          <Image src="/img/fido-s.webp" width={180} height={58} alt="云驰互联合作生态" loading="lazy" />
+          <img src="/img/cloudflare.svg" width={180} height={58} alt="Cloudflare CDN 基础设施" loading="lazy" />
+          <img src="/img/fido-s.webp" width={180} height={58} alt="云驰互联合作生态" loading="lazy" />
         </div>
       </section>
 
@@ -236,7 +235,7 @@ export default function Home() {
       <section id="feedback" className="feedback-section">
         <div className="feedback-card">
           <div className="feedback-visual" aria-hidden="true">
-            <Image src="/star/images/iocdn_feedback.png" width={280} height={220} alt="" loading="lazy" />
+            <img src="/star/images/iocdn_feedback.png" width={280} height={220} alt="" loading="lazy" />
           </div>
           <div className="feedback-content">
             <span className="eyebrow">Feedback loop</span>
