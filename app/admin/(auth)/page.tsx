@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import '../../../styles/admin.css';
 
 interface StatsData {
   total_requests?: number;
