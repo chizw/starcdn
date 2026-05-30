@@ -18,7 +18,7 @@ const metrics = [
 const services = [
   { name: 'Jsdelivr', desc: 'NPM / GitHub 公共库镜像', image: '/star/images/m-jsdelivr.png' },
   { name: 'Gravatar', desc: '头像资源稳定加速', image: '/star/images/m-gravater.png' },
-  { name: 'cdnjs', desc: '前端库资源快速分发', image: '/star/images/m-google.png' },
+  { name: 'Cdnjs', desc: '前端库资源快速分发', image: '/star/images/m-google.png' },
 ];
 
 const features = [
@@ -40,7 +40,7 @@ const steps = [
 const recipes = [
   { name: 'Jsdelivr', source: '//cdn.jsdelivr.net', target: '//jscdn.wuxit.cn' },
   { name: 'Gravatar', source: '//www.gravatar.com/avatar', target: '//jscdn.wuxit.cn/avatar' },
-  { name: 'cdnjs', source: '//cdnjs.cloudflare.com/ajax', target: '//jscdn.wuxit.cn/ajax' },
+  { name: 'Cdnjs', source: '//cdnjs.cloudflare.com/ajax/libs', target: '//jscdn.wuxit.cn/ajax/libs' },
 ];
 
 const faqs = [
@@ -65,11 +65,11 @@ const jsonLd = {
   provider: {
     '@type': 'Organization',
     name: '信网',
-    url: 'https://www.wuxit.cn',
+    url: 'https://jscdn.wuxit.cn',
   },
   areaServed: 'CN',
   url: 'https://jscdn.wuxit.cn',
-  description: 'StarCDN 为 Jsdelivr、Gravatar、cdnjs 等公共资源提供稳定、快速、免费的 CDN 镜像加速服务。',
+  description: 'StarCDN 为 Jsdelivr、Gravatar、Cdnjs 等公共资源提供稳定、快速、免费的 CDN 镜像加速服务。',
 };
 
 export default function Home() {
@@ -93,7 +93,7 @@ export default function Home() {
         <div className="hero-copy">
           <span className="eyebrow">Public CDN for modern builders</span>
           <h1>让公共资源加载像星光一样快。</h1>
-          <p>Star⭐CDN 为 Jsdelivr、Gravatar、cdnjs 等公共资源提供稳定、轻量、无需配置的镜像加速服务，专为国内访问体验重新设计。</p>
+          <p>Star⭐CDN 为 Jsdelivr、Gravatar、Cdnjs 等公共资源提供稳定、轻量、无需配置的镜像加速服务，专为国内访问体验重新设计。</p>
           <div className="hero-actions">
             <a className="primary-action" href="#usage">立即接入</a>
             <a className="secondary-action" href="#features">了解能力</a>
@@ -271,7 +271,7 @@ export default function Home() {
         <div className="footer-links">
           <a href="#features">产品能力</a>
           <a href="#usage">接入指南</a>
-          <a href="https://www.wuxit.cn" target="_blank" rel="noreferrer">信网智能 CDN</a>
+          <a href="https://jscdn.wuxit.cn" target="_blank" rel="noreferrer">信网智能 CDN</a>
           <a href="https://github.com/scfcn/StarCDN" target="_blank" rel="noreferrer">GitHub 项目</a>
         </div>
         <div className="footer-meta">
