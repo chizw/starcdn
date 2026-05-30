@@ -14,12 +14,9 @@ async function checkAuth(): Promise<boolean> {
     const adminToken = cookieStore.get('admin_token')?.value;
     if (!adminToken) return false;
 
-    // Verify JWT directly in Next.js (same secret as Go)
-    const jwtSecret = process.env.JWT_SECRET || 'starcdn-default-jwt-secret-2025';
     const parts = adminToken.split('.');
     if (parts.length !== 3) return false;
 
-    // Simple expiration check without full verification
     const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
     if (payload.exp && payload.exp * 1000 < Date.now()) return false;
 
@@ -32,7 +29,17 @@ async function checkAuth(): Promise<boolean> {
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const isAuthenticated = await checkAuth();
   if (!isAuthenticated) {
-    redirect('/admin/login');
+    return (
+      <html>
+        <head>
+          <script dangerouslySetInnerHTML={{ __html: `
+            document.cookie = 'admin_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            window.location.href = '/admin/login';
+          ` }} />
+        </head>
+        <body />
+      </html>
+    );
   }
 
   return (

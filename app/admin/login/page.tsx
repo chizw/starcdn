@@ -42,9 +42,11 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        router.push('/admin');
-        router.refresh();
+        if (data.token) {
+          document.cookie = `admin_token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        window.location.href = '/admin';
       } else {
         setError(data.error || '登录失败');
       }
@@ -96,7 +98,11 @@ export default function LoginPage() {
       });
       const data = await finishRes.json();
       if (finishRes.ok) {
-        router.push('/admin');
+        if (data.token) {
+          document.cookie = `admin_token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        window.location.href = '/admin';
       } else {
         setError(data.error || 'PASSKEY 验证失败');
       }
