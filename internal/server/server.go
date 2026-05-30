@@ -35,8 +35,6 @@ type Config struct {
 	AdminUser  string
 	AdminPass  string
 	JWTSecret  string
-	RPID       string
-	RPOrigin   string
 	StaticDir  string
 }
 
@@ -91,16 +89,8 @@ func New(cfg Config) (*Server, error) {
 		if cfg.JWTSecret == "" {
 			cfg.JWTSecret = auth.GenerateSecureKey()
 		}
-		if cfg.RPID == "" {
-			cfg.RPID = "localhost"
-		}
-		if cfg.RPOrigin == "" {
-			cfg.RPOrigin = "http://localhost:2607"
-		}
 
 		authSvc, err = auth.New(auth.Config{
-			RPID:          cfg.RPID,
-			RPOrigin:      cfg.RPOrigin,
 			JWTSecret:     cfg.JWTSecret,
 			JWTExpiration: 24 * time.Hour,
 		}, database)
@@ -151,6 +141,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if r.URL.Path == "/api/stats" {
+		s.handlePublicStats(w, r)
 		return
 	}
 
@@ -234,6 +229,58 @@ func (s *Server) serveStaticFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.NotFound(w, r)
+}
+
+func (s *Server) handlePublicStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=15")
+
+	if s.database == nil {
+		w.Write([]byte("[]"))
+		return
+	}
+
+	prefixes := map[string]string{
+		"/npm/":       "Jsdelivr",
+		"/gh/":        "Jsdelivr",
+		"/wp/":        "Jsdelivr",
+		"/avatar/":    "Gravatar",
+		"/ajax/libs/": "Cdnjs",
+	}
+
+	stats, err := s.database.GetServiceStats(prefixes)
+	if err != nil {
+		stats = nil
+	}
+
+	merged := make(map[string]*db.ServiceStats)
+	for i := range stats {
+		name := stats[i].Name
+		if existing, ok := merged[name]; ok {
+			existing.TotalRequests += stats[i].TotalRequests
+			existing.TotalBytes += stats[i].TotalBytes
+		} else {
+			copy := stats[i]
+			merged[name] = &copy
+		}
+	}
+
+	order := []string{"Jsdelivr", "Gravatar", "Cdnjs"}
+	result := make([]*db.ServiceStats, 0, len(order))
+	for _, name := range order {
+		if s, ok := merged[name]; ok {
+			result = append(result, s)
+		} else {
+			result = append(result, &db.ServiceStats{Name: name, TotalRequests: 0, TotalBytes: 0, Online: true})
+		}
+	}
+
+	json.NewEncoder(w).Encode(result)
 }
 
 func (s *Server) handleProxy(w http.ResponseWriter, r *http.Request, route ProxyRoute) {
@@ -464,7 +511,7 @@ func (s *Server) deleteCache(key string) error {
 	return nil
 }
 
-func (s *Server) handlePurge(route ProxyRoute, r *http.Request, key string, targetURL string) {
+func (s *Server) handlePurge(_ ProxyRoute, r *http.Request, _ string, targetURL string) {
 	if !strings.Contains(targetURL, "cdn.jsdelivr.net") {
 		return
 	}

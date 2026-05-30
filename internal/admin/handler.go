@@ -122,8 +122,8 @@ func (h *Handler) requireAuthWithID(w http.ResponseWriter, r *http.Request, hand
 
 func extractToken(r *http.Request) string {
 	authHeader := r.Header.Get("Authorization")
-	if strings.HasPrefix(authHeader, "Bearer ") {
-		return strings.TrimPrefix(authHeader, "Bearer ")
+	if after, ok := strings.CutPrefix(authHeader, "Bearer "); ok {
+		return after
 	}
 
 	cookie, err := r.Cookie("admin_token")
@@ -369,15 +369,15 @@ func (h *Handler) handleListPasskeys(w http.ResponseWriter, r *http.Request) {
 	}
 
 	creds := user.PasskeyCredentials()
-	items := make([]map[string]interface{}, 0, len(creds))
+	items := make([]map[string]any, 0, len(creds))
 	for i := range creds {
-		items = append(items, map[string]interface{}{
+		items = append(items, map[string]any{
 			"id":         i,
 			"created_at": user.CreatedAt,
 		})
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
+	writeJSON(w, http.StatusOK, map[string]any{
 		"passkeys": items,
 	})
 }
@@ -423,7 +423,7 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	creation, err := h.authSvc.BeginPasskeyRegistration(userID, w)
+	creation, err := h.authSvc.BeginPasskeyRegistration(userID, r, w)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to begin registration"})
 		return
@@ -449,7 +449,7 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 }
 
 func (h *Handler) handlePasskeyLoginBegin(w http.ResponseWriter, r *http.Request) {
-	assertion, err := h.authSvc.BeginPasskeyLogin(w)
+	assertion, err := h.authSvc.BeginPasskeyLogin(r, w)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to begin login"})
 		return
@@ -477,7 +477,7 @@ func (h *Handler) handlePasskeyLoginFinish(w http.ResponseWriter, r *http.Reques
 
 	writeJSON(w, http.StatusOK, map[string]string{"token": token})
 }
-func writeJSON(w http.ResponseWriter, status int, data interface{}) {
+func writeJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(data)

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"time"
 
@@ -20,34 +21,45 @@ import (
 )
 
 type Config struct {
-	RPID          string
-	RPOrigin      string
 	JWTSecret     string
 	JWTExpiration time.Duration
 }
 
 type Service struct {
 	cfg Config
-	wa  *webauthn.WebAuthn
 	db  *db.DB
 }
 
 func New(cfg Config, database *db.DB) (*Service, error) {
-	waConfig := &webauthn.Config{
-		RPDisplayName: "StarCDN Admin",
-		RPID:          cfg.RPID,
-		RPOrigins:     []string{cfg.RPOrigin},
-	}
-	wa, err := webauthn.New(waConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create webauthn: %w", err)
-	}
-
 	return &Service{
 		cfg: cfg,
-		wa:  wa,
 		db:  database,
 	}, nil
+}
+
+func (s *Service) newWebAuthn(r *http.Request) (*webauthn.WebAuthn, error) {
+	host := r.Host
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		scheme := "http"
+		if r.TLS != nil {
+			scheme = "https"
+		}
+		if proto := r.Header.Get("X-Forwarded-Proto"); proto != "" {
+			scheme = proto
+		}
+		origin = scheme + "://" + r.Host
+	}
+
+	return webauthn.New(&webauthn.Config{
+		RPDisplayName: "StarCDN Admin",
+		RPID:          host,
+		RPOrigins:     []string{origin},
+	})
 }
 
 type userForWebAuthn struct {
@@ -191,13 +203,18 @@ func (s *Service) setCookie(w http.ResponseWriter, name, value string, maxAge in
 	})
 }
 
-func (s *Service) BeginPasskeyRegistration(userID int64, w http.ResponseWriter) (*protocol.CredentialCreation, error) {
+func (s *Service) BeginPasskeyRegistration(userID int64, r *http.Request, w http.ResponseWriter) (*protocol.CredentialCreation, error) {
+	wa, err := s.newWebAuthn(r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create webauthn: %w", err)
+	}
+
 	user, err := s.db.GetUserByID(userID)
 	if err != nil {
 		return nil, err
 	}
 	waUser := userForWebAuthn{user}
-	options, session, err := s.wa.BeginRegistration(&waUser)
+	options, session, err := wa.BeginRegistration(&waUser)
 	if err != nil {
 		return nil, err
 	}
@@ -214,6 +231,11 @@ func (s *Service) BeginPasskeyRegistration(userID int64, w http.ResponseWriter) 
 }
 
 func (s *Service) FinishPasskeyRegistration(userID int64, r *http.Request) error {
+	wa, err := s.newWebAuthn(r)
+	if err != nil {
+		return fmt.Errorf("failed to create webauthn: %w", err)
+	}
+
 	user, err := s.db.GetUserByID(userID)
 	if err != nil {
 		return err
@@ -244,7 +266,7 @@ func (s *Service) FinishPasskeyRegistration(userID int64, r *http.Request) error
 	}
 
 	waUser := userForWebAuthn{user}
-	credential, err := s.wa.CreateCredential(&waUser, *session, parsedResponse)
+	credential, err := wa.CreateCredential(&waUser, *session, parsedResponse)
 	if err != nil {
 		return err
 	}
@@ -256,8 +278,13 @@ func (s *Service) FinishPasskeyRegistration(userID int64, r *http.Request) error
 	return s.db.UpdatePasskeyCredentials(userID, creds)
 }
 
-func (s *Service) BeginPasskeyLogin(w http.ResponseWriter) (*protocol.CredentialAssertion, error) {
-	options, session, err := s.wa.BeginDiscoverableLogin()
+func (s *Service) BeginPasskeyLogin(r *http.Request, w http.ResponseWriter) (*protocol.CredentialAssertion, error) {
+	wa, err := s.newWebAuthn(r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create webauthn: %w", err)
+	}
+
+	options, session, err := wa.BeginDiscoverableLogin()
 	if err != nil {
 		return nil, err
 	}
@@ -274,6 +301,11 @@ func (s *Service) BeginPasskeyLogin(w http.ResponseWriter) (*protocol.Credential
 }
 
 func (s *Service) FinishPasskeyLogin(r *http.Request) (string, error) {
+	wa, err := s.newWebAuthn(r)
+	if err != nil {
+		return "", fmt.Errorf("failed to create webauthn: %w", err)
+	}
+
 	cookie, err := r.Cookie("webauthn_session")
 	if err != nil {
 		return "", fmt.Errorf("session cookie not found")
@@ -289,7 +321,7 @@ func (s *Service) FinishPasskeyLogin(r *http.Request) (string, error) {
 		return "", fmt.Errorf("invalid session data: %w", err)
 	}
 
-	user, _, err := s.wa.FinishPasskeyLogin(s.findUserByCredentialHandle, *session, r)
+	user, _, err := wa.FinishPasskeyLogin(s.findUserByCredentialHandle, *session, r)
 	if err != nil {
 		return "", err
 	}

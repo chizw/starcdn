@@ -20,8 +20,6 @@ func main() {
 		AdminUser:  env("STARCDN_ADMIN_USER", "admin"),
 		AdminPass:  env("STARCDN_ADMIN_PASS", "admin123"),
 		JWTSecret:  env("STARCDN_JWT_SECRET", "starcdn-default-jwt-secret-2025"),
-		RPID:       env("STARCDN_RP_ID", "localhost"),
-		RPOrigin:   env("STARCDN_RP_ORIGIN", "http://localhost:2607"),
 		StaticDir:  os.Getenv("STARCDN_STATIC_DIR"),
 	}
 
