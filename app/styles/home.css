@@ -74,7 +74,6 @@ body {
 .site-header,
 .hero-section,
 .metrics-strip,
-.status-section,
 .service-section,
 .feature-section,
 .network-section,
@@ -417,6 +416,8 @@ body {
 }
 
 .service-card {
+  display: flex;
+  flex-direction: column;
   padding: 34px 30px;
   border-right: 1px solid var(--line-soft);
   transition: background 0.32s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
@@ -1018,74 +1019,52 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.status-section {
-  padding: 42px 0 82px;
-}
-
-.status-strip {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
-
-.status-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 22px;
-  padding: 28px 26px;
-  border-right: 1px solid var(--line-soft);
-  transition: background 0.32s ease;
-}
-
-.status-card:last-child {
-  border-right: 0;
-}
-
-.status-card:hover {
-  background: rgba(255, 252, 245, 0.38);
-}
-
-.status-card-head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.status-card-head img {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  filter: saturate(0.74) contrast(0.96);
-}
-
-.status-card-info h3 {
-  margin: 0 0 4px;
-  color: var(--ink);
-  font-size: 1.12rem;
-}
-
-.status-card-info p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.86rem;
-}
-
-.status-card-metrics {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.service-stats {
+  margin-top: auto;
   padding-top: 18px;
   border-top: 1px solid var(--line-soft);
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stats-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stats-label {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stats-value {
+  color: var(--ink);
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.stats-status {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
@@ -1099,8 +1078,8 @@ body {
 
 .status-dot {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: currentColor;
 }
@@ -1114,36 +1093,8 @@ body {
   box-shadow: 0 0 0 4px rgba(192, 85, 59, 0.18);
 }
 
-.status-latency {
-  color: var(--muted);
-  font-size: 1.34rem;
-  font-weight: 800;
-  letter-spacing: -0.06em;
-  font-variant-numeric: tabular-nums;
-}
-
-.status-footnote {
-  margin: 18px 0 0;
-  color: rgba(112, 108, 93, 0.66);
-  font-size: 0.82rem;
-  font-weight: 600;
-  text-align: right;
-}
-
-.status-skeleton {
-  pointer-events: none;
-}
-
-.status-icon-skeleton {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: var(--line-soft);
-  animation: skeletonPulse 1.6s ease-in-out infinite;
-}
-
-.status-line-skeleton {
-  height: 12px;
+.stats-skeleton {
+  height: 32px;
   border-radius: 6px;
   background: var(--line-soft);
   animation: skeletonPulse 1.6s ease-in-out infinite;
@@ -1212,18 +1163,6 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .status-strip {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .status-card:nth-child(2) {
-    border-right: 0;
-  }
-
-  .status-card:nth-child(-n + 2) {
-    border-bottom: 1px solid var(--line-soft);
-  }
-
   .service-card,
   .step-card {
     border-right: 0;
@@ -1253,7 +1192,6 @@ body {
   .site-header,
   .hero-section,
   .metrics-strip,
-  .status-section,
   .service-section,
   .feature-section,
   .network-section,
@@ -1302,20 +1240,6 @@ body {
 
   .metric-card:last-child,
   .step-card:last-child {
-    border-bottom: 0;
-  }
-
-  .status-strip {
-    grid-template-columns: 1fr;
-  }
-
-  .status-card,
-  .status-card:nth-child(2) {
-    border-right: 0;
-    border-bottom: 1px solid var(--line-soft);
-  }
-
-  .status-card:last-child {
     border-bottom: 0;
   }
 

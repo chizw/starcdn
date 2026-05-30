@@ -1,115 +1,92 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import Image from 'next/image';
+import { useEffect, useState, useRef } from 'react';
 
-interface ServiceProbe {
+interface ServiceStats {
   name: string;
-  desc: string;
-  image: string;
-  url: string;
-}
-
-interface ServiceState extends ServiceProbe {
+  total_requests: number;
+  total_bytes: number;
   online: boolean;
-  latency: number;
 }
 
-const probes: ServiceProbe[] = [
-  { name: 'Jsdelivr', desc: 'NPM / GitHub 公共库镜像', image: '/star/images/m-jsdelivr.png', url: 'https://cdn.jsdelivr.net/favicon.ico' },
-  { name: 'Gravatar', desc: '头像资源稳定加速', image: '/star/images/m-gravater.png', url: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=404&s=1' },
-  { name: 'Cdnjs', desc: '前端库资源快速分发', image: '/star/images/m-google.png', url: 'https://cdnjs.cloudflare.com/favicon.ico' },
-];
-
-async function probeOne(svc: ServiceProbe): Promise<ServiceState> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
-  const start = performance.now();
-
-  try {
-    await fetch(svc.url, {
-      mode: 'no-cors',
-      cache: 'no-store',
-      signal: controller.signal,
-    });
-    const latency = Math.round(performance.now() - start);
-    return { ...svc, online: true, latency };
-  } catch {
-    return { ...svc, online: false, latency: 0 };
-  } finally {
-    clearTimeout(timeout);
-  }
+interface Props {
+  serviceName: string;
 }
 
-async function probeAll(): Promise<ServiceState[]> {
-  return Promise.all(probes.map(probeOne));
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  if (bytes >= 1_073_741_824) return `${(bytes / 1_073_741_824).toFixed(1)} GB`;
+  if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toFixed(1)} MB`;
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${bytes} B`;
 }
 
-export default function ServiceStatus() {
-  const [services, setServices] = useState<ServiceState[]>([]);
-  const [lastCheck, setLastCheck] = useState<Date | null>(null);
-  const [loading, setLoading] = useState(true);
+function formatNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toString();
+}
+
+export default function ServiceStatus({ serviceName }: Props) {
+  const [stats, setStats] = useState<ServiceStats | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const mountedRef = useRef(true);
-
-  const runCheck = useCallback(async () => {
-    const results = await probeAll();
-    if (!mountedRef.current) return;
-    setServices(results);
-    setLastCheck(new Date());
-    setLoading(false);
-  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
-    runCheck();
-    const timer = setInterval(runCheck, 30000);
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/stats', { cache: 'no-store' });
+        if (!res.ok || !mountedRef.current) return;
+        const data: ServiceStats[] = await res.json();
+        const found = data.find((s) => s.name === serviceName);
+        if (found && mountedRef.current) setStats(found);
+      } catch {
+      } finally {
+        if (mountedRef.current) setLoaded(true);
+      }
+    }
+
+    fetchStats();
+    const timer = setInterval(fetchStats, 30000);
     return () => {
       mountedRef.current = false;
       clearInterval(timer);
     };
-  }, [runCheck]);
+  }, [serviceName]);
+
+  if (!loaded) {
+    return (
+      <div className="service-stats">
+        <div className="stats-row">
+          <div className="stats-skeleton" />
+          <div className="stats-skeleton" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) return null;
 
   return (
-    <section className="status-section" aria-label="服务状态">
-      <div className="section-heading compact">
-        <span>实时监测</span>
-        <h2>服务在线状态</h2>
+    <div className="service-stats">
+      <div className="stats-row">
+        <div className="stats-item">
+          <span className="stats-label">请求数</span>
+          <strong className="stats-value">{formatNumber(stats.total_requests)}</strong>
+        </div>
+        <div className="stats-item">
+          <span className="stats-label">带宽</span>
+          <strong className="stats-value">{formatBytes(stats.total_bytes)}</strong>
+        </div>
       </div>
-      <div className="status-strip">
-        {loading
-          ? Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="status-card status-skeleton">
-                <div className="status-icon-skeleton" />
-                <div className="status-line-skeleton" style={{ width: '60%' }} />
-                <div className="status-line-skeleton" style={{ width: '40%' }} />
-              </div>
-            ))
-          : services.map((svc) => (
-              <article key={svc.name} className="status-card">
-                <div className="status-card-head">
-                  <Image src={svc.image} width={44} height={44} alt={`${svc.name} logo`} />
-                  <div className="status-card-info">
-                    <h3>{svc.name}</h3>
-                    <p>{svc.desc}</p>
-                  </div>
-                </div>
-                <div className="status-card-metrics">
-                  <span className={`status-badge ${svc.online ? 'online' : 'offline'}`}>
-                    <i className="status-dot" />
-                    {svc.online ? '在线' : '离线'}
-                  </span>
-                  <span className="status-latency">
-                    {svc.online ? `${svc.latency}ms` : '--'}
-                  </span>
-                </div>
-              </article>
-            ))}
+      <div className="stats-status">
+        <span className={`status-badge ${stats.online ? 'online' : 'offline'}`}>
+          <i className="status-dot" />
+          {stats.online ? '运行中' : '离线'}
+        </span>
       </div>
-      {lastCheck && (
-        <p className="status-footnote">
-          上次检测 {lastCheck.toLocaleTimeString('zh-CN')} · 每 30 秒自动刷新
-        </p>
-      )}
-    </section>
+    </div>
   );
 }

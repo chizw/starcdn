@@ -35,8 +35,6 @@ type Config struct {
 	AdminUser  string
 	AdminPass  string
 	JWTSecret  string
-	RPID       string
-	RPOrigin   string
 	StaticDir  string
 }
 
@@ -154,6 +152,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.URL.Path == "/api/stats" {
+		s.handlePublicStats(w, r)
+		return
+	}
+
 	if strings.HasPrefix(r.URL.Path, "/admin/api/") || r.URL.Path == "/admin/api/flush" {
 		if s.adminHdlr != nil {
 			s.adminHdlr.ServeHTTP(w, r)
@@ -234,6 +237,54 @@ func (s *Server) serveStaticFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.NotFound(w, r)
+}
+
+func (s *Server) handlePublicStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=15")
+
+	if s.database == nil {
+		w.Write([]byte("[]"))
+		return
+	}
+
+	prefixes := map[string]string{
+		"/npm/":       "Jsdelivr",
+		"/gh/":        "Jsdelivr",
+		"/wp/":        "Jsdelivr",
+		"/avatar/":    "Gravatar",
+		"/ajax/libs/": "Cdnjs",
+	}
+
+	stats, err := s.database.GetServiceStats(prefixes)
+	if err != nil {
+		w.Write([]byte("[]"))
+		return
+	}
+
+	merged := make(map[string]*db.ServiceStats)
+	for i := range stats {
+		name := stats[i].Name
+		if existing, ok := merged[name]; ok {
+			existing.TotalRequests += stats[i].TotalRequests
+			existing.TotalBytes += stats[i].TotalBytes
+		} else {
+			copy := stats[i]
+			merged[name] = &copy
+		}
+	}
+
+	result := make([]*db.ServiceStats, 0, len(merged))
+	for _, s := range merged {
+		result = append(result, s)
+	}
+
+	json.NewEncoder(w).Encode(result)
 }
 
 func (s *Server) handleProxy(w http.ResponseWriter, r *http.Request, route ProxyRoute) {
@@ -464,7 +515,7 @@ func (s *Server) deleteCache(key string) error {
 	return nil
 }
 
-func (s *Server) handlePurge(route ProxyRoute, r *http.Request, key string, targetURL string) {
+func (s *Server) handlePurge(_ ProxyRoute, r *http.Request, _ string, targetURL string) {
 	if !strings.Contains(targetURL, "cdn.jsdelivr.net") {
 		return
 	}

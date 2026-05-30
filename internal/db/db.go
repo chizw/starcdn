@@ -280,6 +280,35 @@ func (d *DB) GetTrafficSummary(page, pageSize int) (*TrafficSummary, error) {
 	return s, nil
 }
 
+type ServiceStats struct {
+	Name         string `json:"name"`
+	TotalRequests int64  `json:"total_requests"`
+	TotalBytes    int64  `json:"total_bytes"`
+	Online        bool   `json:"online"`
+}
+
+func (d *DB) GetServiceStats(prefixes map[string]string) ([]ServiceStats, error) {
+	stats := make([]ServiceStats, 0, len(prefixes))
+	for prefix, name := range prefixes {
+		var requests int64
+		var bytes int64
+		err := d.QueryRow(
+			"SELECT COALESCE(SUM(request_count), 0), COALESCE(SUM(bytes_sent), 0) FROM traffic_stats WHERE request_path LIKE ?",
+			prefix+"%",
+		).Scan(&requests, &bytes)
+		if err != nil {
+			return nil, err
+		}
+		stats = append(stats, ServiceStats{
+			Name:          name,
+			TotalRequests: requests,
+			TotalBytes:    bytes,
+			Online:        true,
+		})
+	}
+	return stats, nil
+}
+
 type BanRule struct {
 	ID        int64     `json:"id"`
 	Pattern   string    `json:"pattern"`

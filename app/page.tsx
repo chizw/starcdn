@@ -141,8 +141,6 @@ export default function Home() {
         ))}
       </section>
 
-      <ServiceStatus />
-
       <section className="service-section">
         <div className="section-heading compact">
           <span>镜像资源</span>
@@ -154,6 +152,7 @@ export default function Home() {
               <Image src={service.image} width={76} height={76} alt={`${service.name} CDN 镜像加速`} />
               <h3>{service.name}</h3>
               <p>{service.desc}</p>
+              <ServiceStatus serviceName={service.name} />
             </article>
           ))}
         </div>
