@@ -18,6 +18,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"starcdn/internal/admin"
+	"starcdn/internal/auth"
+	"starcdn/internal/db"
 )
 
 type Config struct {
@@ -25,7 +29,14 @@ type Config struct {
 	StaticDir  string
 	CacheDir   string
 	FlushToken string
+	PurgeToken string
 	CacheTTL   time.Duration
+	DBPath     string
+	AdminUser  string
+	AdminPass  string
+	JWTSecret  string
+	RPID       string
+	RPOrigin   string
 }
 
 type Server struct {
@@ -33,6 +44,9 @@ type Server struct {
 	routes     []ProxyRoute
 	client     *http.Client
 	rateLimits *rateLimiter
+	database   *db.DB
+	authSvc    *auth.Service
+	adminHdlr  *admin.Handler
 }
 
 type ProxyRoute struct {
@@ -63,6 +77,46 @@ func New(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
+	var database *db.DB
+	var authSvc *auth.Service
+	var adminHdlr *admin.Handler
+
+	if cfg.DBPath != "" {
+		var err error
+		database, err = db.New(cfg.DBPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open database: %w", err)
+		}
+
+		if cfg.JWTSecret == "" {
+			cfg.JWTSecret = auth.GenerateSecureKey()
+		}
+		if cfg.RPID == "" {
+			cfg.RPID = "localhost"
+		}
+		if cfg.RPOrigin == "" {
+			cfg.RPOrigin = "http://localhost:8080"
+		}
+
+		authSvc, err = auth.New(auth.Config{
+			RPID:          cfg.RPID,
+			RPOrigin:      cfg.RPOrigin,
+			JWTSecret:     cfg.JWTSecret,
+			JWTExpiration: 24 * time.Hour,
+		}, database)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create auth service: %w", err)
+		}
+
+		if cfg.AdminUser != "" && cfg.AdminPass != "" {
+			if err := authSvc.InitAdminUser(cfg.AdminUser, cfg.AdminPass); err != nil {
+				return nil, fmt.Errorf("failed to init admin user: %w", err)
+			}
+		}
+
+		adminHdlr = admin.NewHandler(authSvc, database)
+	}
+
 	return &Server{
 		cfg: cfg,
 		routes: []ProxyRoute{
@@ -85,6 +139,9 @@ func New(cfg Config) (*Server, error) {
 			},
 		},
 		rateLimits: newRateLimiter(120, time.Minute),
+		database:   database,
+		authSvc:    authSvc,
+		adminHdlr:  adminHdlr,
 	}, nil
 }
 
@@ -93,6 +150,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if strings.HasPrefix(r.URL.Path, "/admin/api/") || r.URL.Path == "/admin/api/flush" {
+		if s.adminHdlr != nil {
+			s.adminHdlr.ServeHTTP(w, r)
+		} else {
+			http.NotFound(w, r)
+		}
 		return
 	}
 
@@ -119,6 +185,14 @@ func (s *Server) handleProxy(w http.ResponseWriter, r *http.Request, route Proxy
 		return
 	}
 
+	if s.database != nil {
+		banned, pattern, err := s.database.IsPathBanned(r.URL.Path)
+		if err == nil && banned {
+			http.Error(w, fmt.Sprintf("blocked by ban rule: %s", pattern), http.StatusForbidden)
+			return
+		}
+	}
+
 	if !s.rateLimits.allow(clientIP(r)) {
 		http.Error(w, "too many requests", http.StatusTooManyRequests)
 		return
@@ -140,13 +214,33 @@ func (s *Server) handleProxy(w http.ResponseWriter, r *http.Request, route Proxy
 		return
 	}
 
+	purge := r.URL.Query().Get("purge") == "1"
+	if purge && s.cfg.PurgeToken != "" && r.URL.Query().Get("purge_token") != s.cfg.PurgeToken {
+		http.Error(w, "invalid purge token", http.StatusForbidden)
+		return
+	}
+	if purge && s.cfg.PurgeToken == "" && !isPrivateClient(r) {
+		http.Error(w, "purge token required", http.StatusForbidden)
+		return
+	}
+
+	if purge {
+		s.handlePurge(route, r, key, targetURL)
+		_ = s.deleteCache(key)
+		w.Header().Set("X-StarCDN-Cache", "PURGED")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"message":"purge request sent","path":"` + r.URL.Path + `"}`))
+		return
+	}
+
 	if flush {
 		_ = s.deleteCache(key)
 	} else if s.serveCache(w, r, key) {
 		return
 	}
 
-	s.fetchAndCache(w, r, targetURL, key, route.CacheTTL)
+	s.fetchAndCacheWithStats(w, r, targetURL, key, route.CacheTTL)
 }
 
 func (s *Server) buildTargetURL(route ProxyRoute, r *http.Request) (string, string, error) {
@@ -185,7 +279,7 @@ func sanitizedQuery(values url.Values) url.Values {
 	clean := url.Values{}
 	keys := make([]string, 0, len(values))
 	for key := range values {
-		if key == "flush" || key == "flush_token" {
+		if key == "flush" || key == "flush_token" || key == "purge" || key == "purge_token" {
 			continue
 		}
 		keys = append(keys, key)
@@ -199,7 +293,7 @@ func sanitizedQuery(values url.Values) url.Values {
 	return clean
 }
 
-func (s *Server) fetchAndCache(w http.ResponseWriter, r *http.Request, targetURL string, key string, ttl time.Duration) {
+func (s *Server) fetchAndCacheWithStats(w http.ResponseWriter, r *http.Request, targetURL string, key string, ttl time.Duration) {
 	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, targetURL, nil)
 	if err != nil {
 		http.Error(w, "bad gateway", http.StatusBadGateway)
@@ -219,6 +313,11 @@ func (s *Server) fetchAndCache(w http.ResponseWriter, r *http.Request, targetURL
 	if err != nil {
 		http.Error(w, "bad gateway", http.StatusBadGateway)
 		return
+	}
+
+	bytesSent := int64(len(body))
+	if s.database != nil {
+		_ = s.database.UpsertTrafficStats(r.URL.Path, bytesSent)
 	}
 
 	header := cloneResponseHeaders(resp.Header)
@@ -250,6 +349,11 @@ func (s *Server) serveCache(w http.ResponseWriter, r *http.Request, key string) 
 	meta, body, err := s.readCache(key)
 	if err != nil || time.Now().UTC().After(meta.ExpiresAt) {
 		return false
+	}
+
+	bytesSent := int64(len(body))
+	if s.database != nil {
+		_ = s.database.UpsertTrafficStats(r.URL.Path, bytesSent)
 	}
 
 	header := cloneResponseHeaders(meta.Header)
@@ -301,6 +405,30 @@ func (s *Server) deleteCache(key string) error {
 	_ = os.Remove(metaPath)
 	_ = os.Remove(bodyPath)
 	return nil
+}
+
+func (s *Server) handlePurge(route ProxyRoute, r *http.Request, key string, targetURL string) {
+	if !strings.Contains(targetURL, "cdn.jsdelivr.net") {
+		return
+	}
+
+	purgeURL := strings.Replace(targetURL, "https://cdn.jsdelivr.net", "https://purge.jsdelivr.net", 1)
+
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, purgeURL, nil)
+	if err != nil {
+		return
+	}
+	req.Header.Set("User-Agent", "StarCDN-Purge/1.0")
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return
+	}
 }
 
 func writeFileAtomic(name string, data []byte) error {

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarCDN Admin - Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        .navbar {
+            background: #1a1a2e;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar h1 { font-size: 1.25rem; }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        .navbar a:hover { opacity: 1; }
+        .navbar a.active { opacity: 1; border-bottom: 2px solid #667eea; }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .stat-card h3 {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .table-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .table-header h2 { font-size: 1.1rem; }
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .refresh-btn:hover { background: #5a6fd6; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0.875rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        th {
+            background: #fafafa;
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        td { font-size: 0.9rem; color: #333; }
+        tr:last-child td { border-bottom: none; }
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+        .bytes { font-family: 'SF Mono', Monaco, monospace; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>StarCDN Admin</h1>
+        <div>
+            <a href="/admin/dashboard" class="active">仪表盘</a>
+            <a href="/admin/bans">封禁规则</a>
+            <a href="#" onclick="handleLogout()">退出</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>总请求数</h3>
+                <div class="value" id="total-requests">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>总发送字节</h3>
+                <div class="value bytes" id="total-bytes">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>独立 URL 数</h3>
+                <div class="value" id="unique-paths">-</div>
+            </div>
+        </div>
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Top URL</h2>
+                <button class="refresh-btn" onclick="loadStats()">刷新</button>
+            </div>
+            <div id="table-body">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        async function loadStats() {
+            try {
+                const res = await fetch('/admin/api/stats');
+                const data = await res.json();
+                document.getElementById('total-requests').textContent = formatNumber(data.total_requests);
+                document.getElementById('total-bytes').textContent = formatBytes(data.total_bytes_sent);
+                document.getElementById('unique-paths').textContent = formatNumber(data.unique_paths);
+                const tableHtml = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>请求路径</th>
+                                <th>请求次数</th>
+                                <th>发送字节</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.top_urls.map(u => `
+                                <tr>
+                                    <td>${escapeHtml(u.request_path)}</td>
+                                    <td>${formatNumber(u.request_count)}</td>
+                                    <td class="bytes">${formatBytes(u.bytes_sent)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                document.getElementById('table-body').innerHTML = tableHtml;
+            } catch (err) {
+                document.getElementById('table-body').innerHTML = '<div class="loading">加载失败</div>';
+            }
+        }
+        function formatNumber(n) {
+            return n.toLocaleString();
+        }
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        async function handleLogout() {
+            await fetch('/admin/api/logout', { method: 'POST' });
+            window.location.href = '/admin/login';
+        }
+        loadStats();
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+</html>

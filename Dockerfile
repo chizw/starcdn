@@ -15,7 +15,7 @@ WORKDIR /app
 COPY go.mod ./
 COPY cmd ./cmd
 COPY internal ./internal
-RUN go build -o /starcdn ./cmd/starcdn
+RUN apk add --no-cache gcc musl-dev && go build -o /starcdn ./cmd/starcdn
 
 FROM alpine:3.22 AS runner
 WORKDIR /app

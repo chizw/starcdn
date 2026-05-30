@@ -1,9 +1,20 @@
 import type { NextConfig } from 'next';
 
+const backendOrigin = process.env.BACKEND_ORIGIN || 'http://localhost:8080';
+
 const nextConfig: NextConfig = {
-  output: 'export',
   compress: true,
   poweredByHeader: false,
+  async rewrites() {
+    return [
+      { source: '/npm/:path*', destination: `${backendOrigin}/npm/:path*` },
+      { source: '/gh/:path*', destination: `${backendOrigin}/gh/:path*` },
+      { source: '/wp/:path*', destination: `${backendOrigin}/wp/:path*` },
+      { source: '/ajax/libs/:path*', destination: `${backendOrigin}/ajax/libs/:path*` },
+      { source: '/avatar/:path*', destination: `${backendOrigin}/avatar/:path*` },
+      { source: '/admin/api/:path*', destination: `${backendOrigin}/admin/api/:path*` },
+    ];
+  },
   async headers() {
     return [
       {

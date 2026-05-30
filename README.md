@@ -76,7 +76,7 @@ npm run dev
 默认访问地址为：
 
 ```text
-http://localhost:3000
+http://localhost:8080
 ```
 
 ## 可用脚本

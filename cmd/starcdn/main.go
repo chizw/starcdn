@@ -15,7 +15,14 @@ func main() {
 		StaticDir:  env("STARCDN_STATIC_DIR", "out"),
 		CacheDir:   env("STARCDN_CACHE_DIR", ".cache/starcdn"),
 		FlushToken: os.Getenv("STARCDN_FLUSH_TOKEN"),
+		PurgeToken: os.Getenv("STARCDN_PURGE_TOKEN"),
 		CacheTTL:   durationEnv("STARCDN_CACHE_TTL", 7*24*time.Hour),
+		DBPath:     env("STARCDN_DB_PATH", ""),
+		AdminUser:  os.Getenv("STARCDN_ADMIN_USER"),
+		AdminPass:  os.Getenv("STARCDN_ADMIN_PASS"),
+		JWTSecret:  os.Getenv("STARCDN_JWT_SECRET"),
+		RPID:       env("STARCDN_RP_ID", "localhost"),
+		RPOrigin:   env("STARCDN_RP_ORIGIN", "http://localhost:8080"),
 	}
 
 	app, err := server.New(cfg)
