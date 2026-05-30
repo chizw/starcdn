@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import ServiceStatus from './components/ServiceStatus';
 
 const navItems = [
   { label: '能力', href: '#features' },
@@ -139,6 +140,8 @@ export default function Home() {
           </div>
         ))}
       </section>
+
+      <ServiceStatus />
 
       <section className="service-section">
         <div className="section-heading compact">

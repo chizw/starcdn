@@ -219,13 +219,13 @@ func (d *DB) UpsertTrafficStats(requestPath string, bytesSent int64) error {
 }
 
 type TrafficSummary struct {
-	TotalRequests   int64  `json:"total_requests"`
-	TotalBytesSent  int64  `json:"total_bytes_sent"`
-	UniquePaths     int64  `json:"unique_paths"`
-	TopURLs         []TopURL `json:"top_urls"`
-	TotalPages      int64  `json:"total_pages"`
-	CurrentPage     int    `json:"current_page"`
-	PageSize        int    `json:"page_size"`
+	TotalRequests  int64    `json:"total_requests"`
+	TotalBytesSent int64    `json:"total_bytes_sent"`
+	UniquePaths    int64    `json:"unique_paths"`
+	TopURLs        []TopURL `json:"top_urls"`
+	TotalPages     int64    `json:"total_pages"`
+	CurrentPage    int      `json:"current_page"`
+	PageSize       int      `json:"page_size"`
 }
 
 type TopURL struct {

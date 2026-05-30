@@ -15,6 +15,7 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -36,16 +37,19 @@ type Config struct {
 	JWTSecret  string
 	RPID       string
 	RPOrigin   string
+	StaticDir  string
 }
 
 type Server struct {
-	cfg        Config
-	routes     []ProxyRoute
-	client     *http.Client
-	rateLimits *rateLimiter
-	database   *db.DB
-	authSvc    *auth.Service
-	adminHdlr  *admin.Handler
+	cfg          Config
+	routes       []ProxyRoute
+	client       *http.Client
+	rateLimits   *rateLimiter
+	database     *db.DB
+	authSvc      *auth.Service
+	adminHdlr    *admin.Handler
+	staticDir    string
+	staticServer http.Handler
 }
 
 type ProxyRoute struct {
@@ -138,6 +142,7 @@ func New(cfg Config) (*Server, error) {
 		database:   database,
 		authSvc:    authSvc,
 		adminHdlr:  adminHdlr,
+		staticDir:  cfg.StaticDir,
 	}, nil
 }
 
@@ -163,7 +168,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.NotFound(w, r)
+	s.serveStaticFile(w, r)
 }
 
 func (s *Server) matchRoute(requestPath string) (ProxyRoute, bool) {
@@ -173,6 +178,62 @@ func (s *Server) matchRoute(requestPath string) (ProxyRoute, bool) {
 		}
 	}
 	return ProxyRoute{}, false
+}
+
+func (s *Server) serveStaticFile(w http.ResponseWriter, r *http.Request) {
+	if s.staticDir == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	fs := http.Dir(s.staticDir)
+	p := path.Clean(r.URL.Path)
+	if p == "." {
+		p = "/"
+	}
+
+	f, err := fs.Open(p)
+	if err == nil {
+		defer f.Close()
+		stat, err := f.Stat()
+		if err == nil && !stat.IsDir() {
+			http.FileServer(fs).ServeHTTP(w, r)
+			return
+		}
+		if err == nil && stat.IsDir() {
+			if idx, err := fs.Open(p + "/index.html"); err == nil {
+				idx.Close()
+				r.URL.Path = p + "/"
+				http.FileServer(fs).ServeHTTP(w, r)
+				return
+			}
+		}
+	}
+
+	if !strings.Contains(path.Base(p), ".") {
+		if idx, err := fs.Open(p + "/index.html"); err == nil {
+			idx.Close()
+			r.URL.Path = p + "/"
+			http.FileServer(fs).ServeHTTP(w, r)
+			return
+		}
+	}
+
+	if p != "/404.html" {
+		if f404, err := fs.Open("/404.html"); err == nil {
+			defer f404.Close()
+			stat, err := f404.Stat()
+			if err == nil {
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				w.Header().Set("Content-Length", strconv.FormatInt(stat.Size(), 10))
+				w.WriteHeader(http.StatusNotFound)
+				io.Copy(w, f404)
+				return
+			}
+		}
+	}
+
+	http.NotFound(w, r)
 }
 
 func (s *Server) handleProxy(w http.ResponseWriter, r *http.Request, route ProxyRoute) {

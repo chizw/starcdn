@@ -36,7 +36,7 @@ export default function DashboardPage() {
 
   const fetchStats = useCallback(async (pageNum: number) => {
     try {
-      const res = await fetch(`/admin/api/proxy/stats?page=${pageNum}&page_size=${pageSize}`, { cache: 'no-store' });
+      const res = await fetch(`/admin/api/stats?page=${pageNum}&page_size=${pageSize}`, { cache: 'no-store' });
       if (!res.ok) {
         if (res.status === 401) {
           window.location.href = '/admin/login';
