@@ -1,25 +1,15 @@
 services:
-  starcdn-nginx:
-    image: nginx:alpine
+  starcdn:
+    image: ghcr.io/scfcn/starcdn:latest
     ports:
       - "2607:2607"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - starcdn-backend
-    restart: unless-stopped
-
-  starcdn-backend:
-    image: ghcr.io/scfcn/starcdn:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
     env_file:
       - .env
     environment:
-      STARCDN_ADDR: :2606
+      STARCDN_ADDR: :2607
       STARCDN_CACHE_DIR: /app/cache
       STARCDN_DB_PATH: /app/data/starcdn.db
+      STARCDN_STATIC_DIR: /app/out
       STARCDN_CACHE_TTL: ${STARCDN_CACHE_TTL:-168h}
       STARCDN_FLUSH_TOKEN: ${STARCDN_FLUSH_TOKEN:-}
     volumes:

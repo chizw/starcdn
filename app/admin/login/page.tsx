@@ -37,7 +37,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('/admin/api/proxy/login', {
+      const res = await fetch('/admin/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -60,7 +60,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const beginRes = await fetch('/admin/api/proxy/passkey/login/begin', { credentials: 'include' });
+      const beginRes = await fetch('/admin/api/passkey/login/begin', { credentials: 'include' });
       const assertion = await beginRes.json();
       if (!beginRes.ok) {
         setError(assertion.error || '登录初始化失败');
@@ -87,7 +87,7 @@ export default function LoginPage() {
       }
       const credential = cred as PublicKeyCredential;
       const response = credential.response as AuthenticatorAssertionResponse;
-      const finishRes = await fetch('/admin/api/proxy/passkey/login/finish', {
+      const finishRes = await fetch('/admin/api/passkey/login/finish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

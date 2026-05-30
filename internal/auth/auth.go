@@ -312,7 +312,7 @@ func (s *Service) FinishPasskeyLogin(r *http.Request) (string, error) {
 	return jwtToken, nil
 }
 
-func (s *Service) findUserByCredentialHandle(rawID, userHandle []byte) (webauthn.User, error) {
+func (s *Service) findUserByCredentialID(credID []byte) (*db.User, error) {
 	users, err := s.getAllUsers()
 	if err != nil {
 		return nil, err
@@ -321,12 +321,20 @@ func (s *Service) findUserByCredentialHandle(rawID, userHandle []byte) (webauthn
 	for _, u := range users {
 		waUser := userForWebAuthn{u}
 		for _, cred := range waUser.WebAuthnCredentials() {
-			if bytes.Equal(cred.ID, rawID) {
-				return &dbUserWrapper{u}, nil
+			if bytes.Equal(cred.ID, credID) {
+				return u, nil
 			}
 		}
 	}
 	return nil, fmt.Errorf("user not found")
+}
+
+func (s *Service) findUserByCredentialHandle(rawID, userHandle []byte) (webauthn.User, error) {
+	user, err := s.findUserByCredentialID(rawID)
+	if err != nil {
+		return nil, err
+	}
+	return &dbUserWrapper{user}, nil
 }
 
 type dbUserWrapper struct {
@@ -362,20 +370,7 @@ func (u *dbUserWrapper) WebAuthnIcon() string {
 }
 
 func (s *Service) findUserByCredential(targetCred *webauthn.Credential) (*db.User, error) {
-	users, err := s.getAllUsers()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, u := range users {
-		waUser := userForWebAuthn{u}
-		for _, cred := range waUser.WebAuthnCredentials() {
-			if bytes.Equal(cred.ID, targetCred.ID) {
-				return u, nil
-			}
-		}
-	}
-	return nil, fmt.Errorf("user not found")
+	return s.findUserByCredentialID(targetCred.ID)
 }
 
 func (s *Service) getAllUsers() ([]*db.User, error) {

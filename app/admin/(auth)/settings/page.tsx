@@ -43,7 +43,7 @@ export default function SettingsPage() {
 
   const fetchPasskeys = useCallback(async () => {
     try {
-      const res = await fetch('/admin/api/proxy/passkeys', { cache: 'no-store' });
+      const res = await fetch('/admin/api/passkeys', { cache: 'no-store' });
       if (!res.ok) {
         if (res.status === 401) {
           window.location.href = '/admin/login';
@@ -84,7 +84,7 @@ export default function SettingsPage() {
 
     setPwdLoading(true);
     try {
-      const res = await fetch('/admin/api/proxy/password', {
+      const res = await fetch('/admin/api/password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -112,7 +112,7 @@ export default function SettingsPage() {
   async function handleDeletePasskey(id: number) {
     if (!confirm('确定要删除该 PASSKEY 吗？')) return;
     try {
-      const res = await fetch(`/admin/api/proxy/passkey/${id}`, {
+      const res = await fetch(`/admin/api/passkey/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -161,7 +161,7 @@ export default function SettingsPage() {
 
       const credential = cred as PublicKeyCredential;
       const response = credential.response as AuthenticatorAttestationResponse;
-      const finishRes = await fetch('/admin/api/proxy/passkey/register/finish', {
+      const finishRes = await fetch('/admin/api/passkey/register/finish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
