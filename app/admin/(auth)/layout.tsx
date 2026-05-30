@@ -42,6 +42,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="admin-nav-links">
           <a href="/admin" className="admin-nav-link">仪表盘</a>
           <a href="/admin/bans" className="admin-nav-link">封禁规则</a>
+          <a href="/admin/settings" className="admin-nav-link">设置</a>
         </div>
         <button type="button" className="admin-logout-btn" id="logout-btn">
           退出

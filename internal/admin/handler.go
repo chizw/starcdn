@@ -60,6 +60,29 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.requireAuth(w, r, h.handleLogout)
 	case path == "/admin/api/flush":
 		h.requireAuth(w, r, h.handleFlush)
+	case path == "/admin/api/password":
+		if r.Method == http.MethodPost {
+			h.requireAuth(w, r, h.handleChangePassword)
+		} else {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	case path == "/admin/api/passkeys":
+		if r.Method == http.MethodGet {
+			h.requireAuth(w, r, h.handleListPasskeys)
+		} else {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	case strings.HasPrefix(path, "/admin/api/passkey/"):
+		if r.Method == http.MethodDelete {
+			id := extractPasskeyID(path)
+			if id < 0 {
+				http.Error(w, "invalid passkey ID", http.StatusBadRequest)
+				return
+			}
+			h.requireAuthWithID(w, r, h.handleDeletePasskey, id)
+		} else {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
 	default:
 		http.NotFound(w, r)
 	}
@@ -122,6 +145,22 @@ func extractBanID(path string) int64 {
 			id = id*10 + int64(c-'0')
 		} else {
 			return 0
+		}
+	}
+	return id
+}
+
+func extractPasskeyID(path string) int64 {
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(parts) < 4 {
+		return -1
+	}
+	var id int64
+	for _, c := range parts[3] {
+		if c >= '0' && c <= '9' {
+			id = id*10 + int64(c-'0')
+		} else {
+			return -1
 		}
 	}
 	return id
@@ -205,7 +244,6 @@ func (h *Handler) handleGetStats(w http.ResponseWriter, r *http.Request) {
 
 type createBanRequest struct {
 	Pattern string `json:"pattern"`
-	Type    string `json:"type"`
 	Reason  string `json:"reason"`
 }
 
@@ -216,17 +254,12 @@ func (h *Handler) handleCreateBan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Pattern == "" || req.Type == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "pattern and type are required"})
+	if req.Pattern == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "pattern is required"})
 		return
 	}
 
-	if req.Type != "URL" && req.Type != "package" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "type must be URL or package"})
-		return
-	}
-
-	rule, err := h.db.CreateBanRule(req.Pattern, req.Type, req.Reason)
+	rule, err := h.db.CreateBanRule(req.Pattern, req.Reason)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create ban rule"})
 		return
@@ -254,12 +287,132 @@ func (h *Handler) handleDeleteBan(w http.ResponseWriter, r *http.Request, id int
 	writeJSON(w, http.StatusOK, map[string]string{"message": "ban rule deleted"})
 }
 
-type flushRequest struct {
-	FlushToken string `json:"flush_token"`
-}
-
 func (h *Handler) handleFlush(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "flush requested"})
+}
+
+type changePasswordRequest struct {
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}
+
+func (h *Handler) handleChangePassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req changePasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request"})
+		return
+	}
+
+	if req.NewPassword == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "new password is required"})
+		return
+	}
+
+	token := extractToken(r)
+	userID, _, err := h.authSvc.ValidateJWT(token)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return
+	}
+
+	user, err := h.db.GetUserByID(userID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get user"})
+		return
+	}
+
+	if user.PasswordHash != "" && !h.authSvc.VerifyPassword(user.PasswordHash, req.OldPassword) {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "old password is incorrect"})
+		return
+	}
+
+	newHash, err := h.authSvc.HashPassword(req.NewPassword)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to hash password"})
+		return
+	}
+
+	if err := h.db.UpdatePassword(userID, newHash); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update password"})
+		return
+	}
+
+	_ = h.authSvc.Logout(token)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:   "admin_token",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	})
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "password changed, please login again"})
+}
+
+func (h *Handler) handleListPasskeys(w http.ResponseWriter, r *http.Request) {
+	token := extractToken(r)
+	userID, _, err := h.authSvc.ValidateJWT(token)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return
+	}
+
+	user, err := h.db.GetUserByID(userID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get user"})
+		return
+	}
+
+	creds := user.PasskeyCredentials()
+	items := make([]map[string]interface{}, 0, len(creds))
+	for i := range creds {
+		items = append(items, map[string]interface{}{
+			"id":         i,
+			"created_at": user.CreatedAt,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"passkeys": items,
+	})
+}
+
+func (h *Handler) handleDeletePasskey(w http.ResponseWriter, r *http.Request, id int64) {
+	token := extractToken(r)
+	userID, _, err := h.authSvc.ValidateJWT(token)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return
+	}
+
+	user, err := h.db.GetUserByID(userID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get user"})
+		return
+	}
+
+	creds := user.PasskeyCredentials()
+	idx := int(id)
+	if idx < 0 || idx >= len(creds) {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "passkey not found"})
+		return
+	}
+
+	newCreds := make([]json.RawMessage, 0, len(creds)-1)
+	newCreds = append(newCreds, creds[:idx]...)
+	newCreds = append(newCreds, creds[idx+1:]...)
+
+	if err := h.db.UpdatePasskeyCredentials(userID, newCreds); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete passkey"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "passkey deleted"})
 }
 
 func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Request) {
@@ -324,7 +477,6 @@ func (h *Handler) handlePasskeyLoginFinish(w http.ResponseWriter, r *http.Reques
 
 	writeJSON(w, http.StatusOK, map[string]string{"token": token})
 }
-
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

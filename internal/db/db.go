@@ -62,7 +62,6 @@ func migrate(db *sql.DB) error {
 	CREATE TABLE IF NOT EXISTS ban_rules (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		pattern TEXT NOT NULL,
-		type TEXT NOT NULL CHECK(type IN ('URL', 'package')),
 		reason TEXT NOT NULL DEFAULT '',
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		enabled INTEGER NOT NULL DEFAULT 1
@@ -71,7 +70,12 @@ func migrate(db *sql.DB) error {
 	CREATE INDEX IF NOT EXISTS idx_ban_pattern ON ban_rules(pattern);
 	`
 	_, err := db.Exec(schema)
-	return err
+	if err != nil {
+		return err
+	}
+
+	_, _ = db.Exec(`ALTER TABLE ban_rules DROP COLUMN type`)
+	return nil
 }
 
 type User struct {
@@ -279,16 +283,15 @@ func (d *DB) GetTrafficSummary(page, pageSize int) (*TrafficSummary, error) {
 type BanRule struct {
 	ID        int64     `json:"id"`
 	Pattern   string    `json:"pattern"`
-	Type      string    `json:"type"`
 	Reason    string    `json:"reason"`
 	CreatedAt time.Time `json:"created_at"`
 	Enabled   bool      `json:"enabled"`
 }
 
-func (d *DB) CreateBanRule(pattern, ruleType, reason string) (*BanRule, error) {
+func (d *DB) CreateBanRule(pattern, reason string) (*BanRule, error) {
 	result, err := d.Exec(
-		"INSERT INTO ban_rules (pattern, type, reason) VALUES (?, ?, ?)",
-		pattern, ruleType, reason,
+		"INSERT INTO ban_rules (pattern, reason) VALUES (?, ?)",
+		pattern, reason,
 	)
 	if err != nil {
 		return nil, err
@@ -300,9 +303,9 @@ func (d *DB) CreateBanRule(pattern, ruleType, reason string) (*BanRule, error) {
 func (d *DB) GetBanRule(id int64) (*BanRule, error) {
 	b := &BanRule{}
 	err := d.QueryRow(
-		"SELECT id, pattern, type, reason, created_at, enabled FROM ban_rules WHERE id = ?",
+		"SELECT id, pattern, reason, created_at, enabled FROM ban_rules WHERE id = ?",
 		id,
-	).Scan(&b.ID, &b.Pattern, &b.Type, &b.Reason, &b.CreatedAt, &b.Enabled)
+	).Scan(&b.ID, &b.Pattern, &b.Reason, &b.CreatedAt, &b.Enabled)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +314,7 @@ func (d *DB) GetBanRule(id int64) (*BanRule, error) {
 
 func (d *DB) ListBanRules() ([]BanRule, error) {
 	rows, err := d.Query(
-		"SELECT id, pattern, type, reason, created_at, enabled FROM ban_rules ORDER BY created_at DESC",
+		"SELECT id, pattern, reason, created_at, enabled FROM ban_rules ORDER BY created_at DESC",
 	)
 	if err != nil {
 		return nil, err
@@ -321,7 +324,7 @@ func (d *DB) ListBanRules() ([]BanRule, error) {
 	var rules []BanRule
 	for rows.Next() {
 		var b BanRule
-		if err := rows.Scan(&b.ID, &b.Pattern, &b.Type, &b.Reason, &b.CreatedAt, &b.Enabled); err != nil {
+		if err := rows.Scan(&b.ID, &b.Pattern, &b.Reason, &b.CreatedAt, &b.Enabled); err != nil {
 			continue
 		}
 		rules = append(rules, b)
@@ -341,7 +344,7 @@ func (d *DB) ToggleBanRule(id int64, enabled bool) error {
 
 func (d *DB) IsPathBanned(requestPath string) (bool, string, error) {
 	rows, err := d.Query(
-		"SELECT pattern, type FROM ban_rules WHERE enabled = 1",
+		"SELECT pattern FROM ban_rules WHERE enabled = 1",
 	)
 	if err != nil {
 		return false, "", err
@@ -349,23 +352,20 @@ func (d *DB) IsPathBanned(requestPath string) (bool, string, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var pattern, ruleType string
-		if err := rows.Scan(&pattern, &ruleType); err != nil {
+		var pattern string
+		if err := rows.Scan(&pattern); err != nil {
 			continue
 		}
-		if matchBanPattern(requestPath, pattern, ruleType) {
+		if matchBanPattern(requestPath, pattern) {
 			return true, pattern, nil
 		}
 	}
 	return false, "", nil
 }
 
-func matchBanPattern(requestPath, pattern, ruleType string) bool {
+func matchBanPattern(requestPath, pattern string) bool {
 	if pattern == "" {
 		return false
-	}
-	if ruleType == "URL" {
-		return requestPath == pattern || (pattern[len(pattern)-1] == '*' && len(requestPath) >= len(pattern)-1 && requestPath[:len(pattern)-1] == pattern[:len(pattern)-1])
 	}
 	return requestPath == pattern || (pattern[len(pattern)-1] == '*' && len(requestPath) >= len(pattern)-1 && requestPath[:len(pattern)-1] == pattern[:len(pattern)-1])
 }

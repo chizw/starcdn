@@ -5,7 +5,6 @@ import { useEffect, useState, useCallback } from 'react';
 interface BanRule {
   id: number;
   pattern: string;
-  type: string;
   reason: string;
   created_at?: string;
 }
@@ -15,7 +14,6 @@ export default function BansPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pattern, setPattern] = useState('');
-  const [banType, setBanType] = useState('URL');
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -53,7 +51,7 @@ export default function BansPage() {
       const res = await fetch('/admin/api/proxy/ban', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pattern, type: banType, reason }),
+        body: JSON.stringify({ pattern, reason }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -61,7 +59,6 @@ export default function BansPage() {
       }
       setPattern('');
       setReason('');
-      setBanType('URL');
       await fetchRules();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '未知错误');
@@ -104,31 +101,17 @@ export default function BansPage() {
       <div className="admin-card" style={{ marginBottom: '28px' }}>
         <h2>添加封禁规则</h2>
         <form className="admin-form" onSubmit={handleCreateRule}>
-          <div className="admin-form-row">
-            <div className="admin-form-group" style={{ flex: 2 }}>
-              <label htmlFor="pattern">匹配模式</label>
-              <input
-                id="pattern"
-                className="admin-form-input"
-                type="text"
-                placeholder="例如：*.exe 或 /path/to/*"
-                value={pattern}
-                onChange={(e) => setPattern(e.target.value)}
-                required
-              />
-            </div>
-            <div className="admin-form-group" style={{ flex: 1 }}>
-              <label htmlFor="banType">类型</label>
-              <select
-                id="banType"
-                className="admin-form-select"
-                value={banType}
-                onChange={(e) => setBanType(e.target.value)}
-              >
-                <option value="URL">URL</option>
-                <option value="package">package</option>
-              </select>
-            </div>
+          <div className="admin-form-group">
+            <label htmlFor="pattern">匹配模式</label>
+            <input
+              id="pattern"
+              className="admin-form-input"
+              type="text"
+              placeholder="例如：*.exe 或 /npm/twikoo*"
+              value={pattern}
+              onChange={(e) => setPattern(e.target.value)}
+              required
+            />
           </div>
           <div className="admin-form-group">
             <label htmlFor="reason">原因</label>
@@ -157,7 +140,6 @@ export default function BansPage() {
               <tr>
                 <th style={{ width: '60px' }}>ID</th>
                 <th>模式</th>
-                <th style={{ width: '100px' }}>类型</th>
                 <th>原因</th>
                 <th style={{ width: '160px' }}>创建时间</th>
                 <th style={{ width: '80px' }}>操作</th>
@@ -169,19 +151,6 @@ export default function BansPage() {
                   <td style={{ fontWeight: 800 }}>{rule.id}</td>
                   <td style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.84rem', wordBreak: 'break-all' }}>
                     {rule.pattern}
-                  </td>
-                  <td>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '3px 10px',
-                      borderRadius: '999px',
-                      fontSize: '0.8rem',
-                      fontWeight: 700,
-                      background: rule.type === 'URL' ? 'rgba(111,125,82,0.15)' : 'rgba(178,147,84,0.15)',
-                      color: rule.type === 'URL' ? 'var(--moss)' : 'var(--brass)',
-                    }}>
-                      {rule.type}
-                    </span>
                   </td>
                   <td style={{ color: 'var(--muted)' }}>{rule.reason || '--'}</td>
                   <td style={{ fontSize: '0.84rem', color: 'var(--muted)' }}>

@@ -68,10 +68,19 @@ export default function LoginPage() {
         setError(assertion.error || '登录初始化失败');
         return;
       }
+      const options = assertion.publicKey || assertion;
+      if (!options.challenge) {
+        setError('PASSKEY 登录初始化数据无效');
+        return;
+      }
       const publicKey = {
-        challenge: base64UrlToArrayBuffer(assertion.challenge),
-        allowCredentials: [],
-        userVerification: assertion.userVerification || 'preferred',
+        ...options,
+        challenge: base64UrlToArrayBuffer(options.challenge),
+        allowCredentials: (options.allowCredentials || []).map((item: PublicKeyCredentialDescriptor) => ({
+          ...item,
+          id: typeof item.id === 'string' ? base64UrlToArrayBuffer(item.id) : item.id,
+        })),
+        userVerification: options.userVerification || 'preferred',
       };
       const cred = await navigator.credentials.get({ publicKey });
       if (!cred) {
