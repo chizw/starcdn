@@ -29,24 +29,14 @@ async function checkAuth(): Promise<boolean> {
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const isAuthenticated = await checkAuth();
   if (!isAuthenticated) {
-    return (
-      <html>
-        <head>
-          <script dangerouslySetInnerHTML={{ __html: `
-            document.cookie = 'admin_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-            window.location.href = '/admin/login';
-          ` }} />
-        </head>
-        <body />
-      </html>
-    );
+    redirect('/admin/login');
   }
 
   return (
     <div className="admin-page">
       <nav className="admin-nav">
         <a href="/admin" className="admin-nav-brand">
-          <img src="/img/logo.png" alt="StarCDN" width="32" height="32" />
+          <img src="/favicon.ico" alt="StarCDN" width="32" height="32" />
           <span>管理后台</span>
         </a>
         <div className="admin-nav-links">

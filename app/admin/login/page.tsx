@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 function base64UrlToArrayBuffer(base64url: string): ArrayBuffer {
@@ -30,6 +30,10 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    document.cookie = 'admin_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  }, []);
+
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -38,14 +42,11 @@ export default function LoginPage() {
       const res = await fetch('/admin/api/proxy/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
       if (res.ok) {
-        if (data.token) {
-          document.cookie = `admin_token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 300));
         window.location.href = '/admin';
       } else {
         setError(data.error || '登录失败');
@@ -61,7 +62,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const beginRes = await fetch('/admin/api/proxy/passkey/login/begin');
+      const beginRes = await fetch('/admin/api/proxy/passkey/login/begin', { credentials: 'include' });
       const assertion = await beginRes.json();
       if (!beginRes.ok) {
         setError(assertion.error || '登录初始化失败');
@@ -82,6 +83,7 @@ export default function LoginPage() {
       const finishRes = await fetch('/admin/api/proxy/passkey/login/finish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           id: credential.id,
           rawId: arrayBufferToBase64Url(credential.rawId),
@@ -98,10 +100,6 @@ export default function LoginPage() {
       });
       const data = await finishRes.json();
       if (finishRes.ok) {
-        if (data.token) {
-          document.cookie = `admin_token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 300));
         window.location.href = '/admin';
       } else {
         setError(data.error || 'PASSKEY 验证失败');
