@@ -46,13 +46,15 @@ export const metadata: Metadata = {
       'max-video-preview': -1,
     },
   },
-  icons: { icon: '/favicon.ico' },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/star/images/logo.png',
+  },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
 };
 

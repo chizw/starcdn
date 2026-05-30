@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 function base64UrlToArrayBuffer(base64url: string): ArrayBuffer {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
@@ -23,7 +22,6 @@ function arrayBufferToBase64Url(buffer: ArrayBuffer): string {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'password' | 'passkey'>('password');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');

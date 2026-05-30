@@ -56,7 +56,10 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    fetchStats(page);
+    const timer = window.setTimeout(() => {
+      fetchStats(page);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [fetchStats, page]);
 
   useEffect(() => {

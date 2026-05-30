@@ -5,6 +5,9 @@ const backendOrigin = process.env.BACKEND_ORIGIN || 'http://localhost:2606';
 const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
+  images: {
+    unoptimized: true,
+  },
   async rewrites() {
     return [
       { source: '/npm/:path*', destination: `${backendOrigin}/npm/:path*` },

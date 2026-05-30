@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import '../../styles/admin.css';
@@ -6,6 +7,7 @@ import '../../styles/admin.css';
 export const metadata: Metadata = {
   title: '管理后台',
   description: 'StarCDN 管理后台',
+  robots: { index: false, follow: false },
 };
 
 async function checkAuth(): Promise<boolean> {
@@ -36,7 +38,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="admin-page">
       <nav className="admin-nav">
         <a href="/admin" className="admin-nav-brand">
-          <img src="/favicon.ico" alt="StarCDN" width="32" height="32" />
+          <Image src="/favicon.ico" alt="StarCDN" width={32} height={32} />
           <span>管理后台</span>
         </a>
         <div className="admin-nav-links">

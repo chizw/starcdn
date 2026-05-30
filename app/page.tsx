@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 const navItems = [
@@ -72,14 +73,28 @@ const jsonLd = {
   description: 'StarCDN 为 Jsdelivr、Gravatar、Cdnjs 等公共资源提供稳定、快速、免费的 CDN 镜像加速服务。',
 };
 
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((faq) => ({
+    '@type': 'Question',
+    name: faq.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.a,
+    },
+  })),
+};
+
 export default function Home() {
   return (
     <main className="home-page">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <div className="home-noise" />
       <header className="site-header">
         <Link className="brand" href="/" aria-label="StarCDN 首页">
-          <img src="/star/images/logo.png" width={156} height={48} alt="StarCDN" fetchPriority="high" />
+          <Image src="/star/images/logo.png" width={156} height={48} alt="StarCDN" priority />
         </Link>
         <nav className="site-nav" aria-label="主导航">
           {navItems.map((item) => (
@@ -133,7 +148,7 @@ export default function Home() {
         <div className="service-grid">
           {services.map((service) => (
             <article key={service.name} className="service-card">
-              <img src={service.image} width={76} height={76} alt={`${service.name} CDN 镜像加速`} loading="lazy" />
+              <Image src={service.image} width={76} height={76} alt={`${service.name} CDN 镜像加速`} />
               <h3>{service.name}</h3>
               <p>{service.desc}</p>
             </article>
@@ -212,15 +227,15 @@ export default function Home() {
           <h2>与开放生态共同运行</h2>
         </div>
         <div className="partners-grid">
-          <img src="/img/cloudflare.svg" width={180} height={58} alt="Cloudflare CDN 基础设施" loading="lazy" />
-          <img src="/img/fido-s.webp" width={180} height={58} alt="云驰互联合作生态" loading="lazy" />
+          <Image src="/img/cloudflare.svg" width={180} height={58} alt="Cloudflare CDN 基础设施" />
+          <Image src="/img/fido-s.webp" width={180} height={58} alt="云驰互联合作生态" />
         </div>
       </section>
 
-      <section id="faq" className="faq-section">
+      <section id="faq" className="faq-section" aria-labelledby="heading-faq">
         <div className="section-heading compact">
           <span>FAQ</span>
-          <h2>常见问题</h2>
+          <h2 id="heading-faq">常见问题</h2>
         </div>
         <div className="faq-list">
           {faqs.map((faq) => (
@@ -232,14 +247,14 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="feedback" className="feedback-section">
+      <section id="feedback" className="feedback-section" aria-labelledby="heading-feedback">
         <div className="feedback-card">
           <div className="feedback-visual" aria-hidden="true">
-            <img src="/star/images/iocdn_feedback.png" width={280} height={220} alt="" loading="lazy" />
+            <Image src="/star/images/iocdn_feedback.png" width={280} height={220} alt="" />
           </div>
           <div className="feedback-content">
             <span className="eyebrow">Feedback loop</span>
-            <h2>发现异常？请直接告诉我们。</h2>
+            <h2 id="heading-feedback">发现异常？请直接告诉我们。</h2>
             <p>资源加载异常、访问变慢、证书错误、安全风险或滥用内容，都可以通过邮件、Issue 或群聊反馈。我们更重视清晰、具体、可复现的描述。</p>
             <div className="feedback-actions">
               <a className="feedback-button primary" href="mailto:help@wuxit.cn">

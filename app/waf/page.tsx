@@ -2,6 +2,7 @@ import Script from 'next/script';
 
 export const metadata = {
   title: '访问被阻止',
+  robots: { index: false, follow: false },
 };
 
 export default function WafPage() {

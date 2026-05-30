@@ -62,7 +62,10 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    fetchPasskeys();
+    const timer = window.setTimeout(() => {
+      fetchPasskeys();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [fetchPasskeys]);
 
   async function handleChangePassword(e: React.FormEvent) {
