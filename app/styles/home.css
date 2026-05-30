@@ -880,23 +880,52 @@ body {
 .feedback-notes {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1px;
+  gap: 14px;
   margin-top: 28px;
-  background: var(--line-soft);
 }
 
 .feedback-notes div {
-  padding: 18px 0 0;
-  background: transparent;
+  position: relative;
+  min-height: 118px;
+  overflow: hidden;
+  padding: 18px 20px 20px;
+  border: 1px solid rgba(36, 32, 23, 0.09);
+  border-radius: 22px;
+  background: rgba(255, 252, 245, 0.46);
+  box-shadow: 0 16px 42px rgba(49, 41, 26, 0.06);
+}
+
+.feedback-notes div::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(111, 125, 82, 0.14), transparent 38%),
+    linear-gradient(135deg, rgba(255, 252, 245, 0.34), transparent 62%);
+}
+
+.feedback-notes div::after {
+  content: '';
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--brass);
+  box-shadow: 0 0 0 6px rgba(178, 147, 84, 0.12);
 }
 
 .feedback-notes strong {
+  position: relative;
   display: block;
   color: var(--ink);
   font-size: 0.96rem;
 }
 
 .feedback-notes p {
+  position: relative;
   margin: 8px 0 0;
   color: var(--muted);
   font-size: 0.94rem;
@@ -931,10 +960,17 @@ body {
   position: relative;
 }
 
-.main-footer p {
+.footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
   width: 100%;
   margin: 0;
   font-size: 0.9rem;
+}
+
+.footer-meta a {
+  color: inherit;
 }
 
 @keyframes breatheField {

@@ -312,7 +312,7 @@ func (s *Server) fetchAndCacheWithStats(w http.ResponseWriter, r *http.Request, 
 	}
 
 	bytesSent := int64(len(body))
-	if s.database != nil {
+	if s.database != nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		_ = s.database.UpsertTrafficStats(r.URL.Path, bytesSent)
 	}
 

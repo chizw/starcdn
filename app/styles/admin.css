@@ -217,6 +217,68 @@
   border-bottom: none;
 }
 
+.admin-table-wrapper {
+  max-height: 480px;
+  overflow-y: auto;
+  border-radius: 12px;
+}
+
+.admin-table-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 3px;
+}
+
+.admin-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--line-soft);
+  margin-top: 20px;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 252, 245, 0.36);
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: background 0.28s ease, transform 0.28s ease, opacity 0.28s ease;
+  font-family: inherit;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: rgba(255, 252, 245, 0.7);
+  transform: translateY(-1px);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.84rem;
+}
+
 .admin-form {
   display: flex;
   flex-direction: column;

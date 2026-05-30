@@ -274,7 +274,10 @@ export default function Home() {
           <a href="https://www.wuxit.cn" target="_blank" rel="noreferrer">信网智能 CDN</a>
           <a href="https://github.com/scfcn/StarCDN" target="_blank" rel="noreferrer">GitHub 项目</a>
         </div>
-        <p>Copyright © 2024-2026 Star⭐CDN · 信网 · All Rights Reserved</p>
+        <div className="footer-meta">
+          <span>Copyright © 2024-2026 Star⭐CDN · 信网 · All Rights Reserved</span>
+          <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">ICP备案号待补充</a>
+        </div>
       </footer>
     </main>
   );

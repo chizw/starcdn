@@ -219,6 +219,9 @@ type TrafficSummary struct {
 	TotalBytesSent  int64  `json:"total_bytes_sent"`
 	UniquePaths     int64  `json:"unique_paths"`
 	TopURLs         []TopURL `json:"top_urls"`
+	TotalPages      int64  `json:"total_pages"`
+	CurrentPage     int    `json:"current_page"`
+	PageSize        int    `json:"page_size"`
 }
 
 type TopURL struct {
@@ -227,18 +230,35 @@ type TopURL struct {
 	BytesSent    int64  `json:"bytes_sent"`
 }
 
-func (d *DB) GetTrafficSummary() (*TrafficSummary, error) {
-	s := &TrafficSummary{}
+func (d *DB) GetTrafficSummary(page, pageSize int) (*TrafficSummary, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	s := &TrafficSummary{
+		CurrentPage: page,
+		PageSize:    pageSize,
+	}
 	var err error
 
-	err = d.QueryRow("SELECT COUNT(DISTINCT request_path), COALESCE(SUM(request_count), 0), COALESCE(SUM(bytes_sent), 0) FROM traffic_stats").
+	err = d.QueryRow("SELECT COUNT(*), COALESCE(SUM(request_count), 0), COALESCE(SUM(bytes_sent), 0) FROM traffic_stats").
 		Scan(&s.UniquePaths, &s.TotalRequests, &s.TotalBytesSent)
 	if err != nil {
 		return nil, err
 	}
 
+	s.TotalPages = (s.UniquePaths + int64(pageSize) - 1) / int64(pageSize)
+
+	offset := (page - 1) * pageSize
 	rows, err := d.Query(
-		"SELECT request_path, request_count, bytes_sent FROM traffic_stats ORDER BY request_count DESC LIMIT 20",
+		"SELECT request_path, request_count, bytes_sent FROM traffic_stats ORDER BY request_count DESC LIMIT ? OFFSET ?",
+		pageSize, offset,
 	)
 	if err != nil {
 		return nil, err

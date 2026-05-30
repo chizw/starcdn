@@ -6,7 +6,10 @@ interface StatsData {
   total_requests?: number;
   total_bytes_sent?: number;
   unique_paths?: number;
-  top_urls?: Array<{ request_path: string; request_count: number }>;
+  top_urls?: Array<{ request_path: string; request_count: number; bytes_sent: number }>;
+  total_pages?: number;
+  current_page?: number;
+  page_size?: number;
 }
 
 function formatBytes(bytes: number): string {
@@ -28,10 +31,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
-  const fetchStats = useCallback(async () => {
+  const fetchStats = useCallback(async (pageNum: number) => {
     try {
-      const res = await fetch('/admin/api/proxy/stats', { cache: 'no-store' });
+      const res = await fetch(`/admin/api/proxy/stats?page=${pageNum}&page_size=${pageSize}`, { cache: 'no-store' });
       if (!res.ok) {
         if (res.status === 401) {
           window.location.href = '/admin/login';
@@ -51,13 +56,31 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchStats();
-    const timer = setInterval(fetchStats, 30000);
-    return () => clearInterval(timer);
-  }, [fetchStats]);
+    fetchStats(page);
+  }, [fetchStats, page]);
 
-  if (loading) {
+  useEffect(() => {
+    const timer = setInterval(() => {
+      fetchStats(page);
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [fetchStats, page]);
+
+  const handlePrevPage = () => {
+    if (page > 1) {
+      setLoading(true);
+      setPage(page - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (stats && page < (stats.total_pages || 1)) {
+      setLoading(true);
+      setPage(page + 1);
+    }
+  };
+
+  if (loading && !stats) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
         <div className="loading-spinner" />
@@ -69,7 +92,7 @@ export default function DashboardPage() {
     return (
       <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--clay)' }}>
         <p>{error}</p>
-        <button className="secondary-action" onClick={fetchStats} style={{ marginTop: '16px' }}>
+        <button className="secondary-action" onClick={() => fetchStats(page)} style={{ marginTop: '16px' }}>
           重试
         </button>
       </div>
@@ -104,24 +127,51 @@ export default function DashboardPage() {
       <div className="admin-card">
         <h2>Top URL</h2>
         {stats?.top_urls && stats.top_urls.length > 0 ? (
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>URL</th>
-                <th style={{ width: '120px' }}>请求数</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats.top_urls.map((item, i) => (
-                <tr key={i}>
-                  <td style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.84rem', wordBreak: 'break-all' }}>
-                    {item.request_path}
-                  </td>
-                  <td style={{ fontWeight: 800 }}>{formatNumber(item.request_count)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <>
+            <div className="admin-table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>URL</th>
+                    <th style={{ width: '100px' }}>请求数</th>
+                    <th style={{ width: '100px' }}>流量</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.top_urls.map((item, i) => (
+                    <tr key={i}>
+                      <td style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.84rem', wordBreak: 'break-all' }}>
+                        {item.request_path}
+                      </td>
+                      <td style={{ fontWeight: 800 }}>{formatNumber(item.request_count)}</td>
+                      <td style={{ color: 'var(--muted)' }}>{formatBytes(item.bytes_sent)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {(stats.total_pages || 0) > 1 && (
+              <div className="pagination">
+                <button
+                  className="pagination-btn"
+                  onClick={handlePrevPage}
+                  disabled={page <= 1}
+                >
+                  上一页
+                </button>
+                <span className="pagination-info">
+                  第 {page} / {stats.total_pages} 页
+                </span>
+                <button
+                  className="pagination-btn"
+                  onClick={handleNextPage}
+                  disabled={page >= (stats.total_pages || 1)}
+                >
+                  下一页
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '40px 0' }}>暂无数据</p>
         )}

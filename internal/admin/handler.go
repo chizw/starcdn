@@ -3,6 +3,7 @@ package admin
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"starcdn/internal/auth"
@@ -179,7 +180,21 @@ func (h *Handler) handleLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleGetStats(w http.ResponseWriter, r *http.Request) {
-	summary, err := h.db.GetTrafficSummary()
+	page := 1
+	pageSize := 20
+
+	if p := r.URL.Query().Get("page"); p != "" {
+		if val, err := strconv.Atoi(p); err == nil && val > 0 {
+			page = val
+		}
+	}
+	if ps := r.URL.Query().Get("page_size"); ps != "" {
+		if val, err := strconv.Atoi(ps); err == nil && val > 0 && val <= 100 {
+			pageSize = val
+		}
+	}
+
+	summary, err := h.db.GetTrafficSummary(page, pageSize)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get stats"})
 		return
