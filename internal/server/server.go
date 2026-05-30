@@ -89,16 +89,8 @@ func New(cfg Config) (*Server, error) {
 		if cfg.JWTSecret == "" {
 			cfg.JWTSecret = auth.GenerateSecureKey()
 		}
-		if cfg.RPID == "" {
-			cfg.RPID = "localhost"
-		}
-		if cfg.RPOrigin == "" {
-			cfg.RPOrigin = "http://localhost:2607"
-		}
 
 		authSvc, err = auth.New(auth.Config{
-			RPID:          cfg.RPID,
-			RPOrigin:      cfg.RPOrigin,
 			JWTSecret:     cfg.JWTSecret,
 			JWTExpiration: 24 * time.Hour,
 		}, database)
