@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "next dev -p 8080",
+    "dev": "next dev -p 2607",
     "dev:backend": "go run ./cmd/starcdn",
     "dev:all": "npx concurrently -n \"NEXT,GO\" -c \"cyan,green\" \"npm run dev\" \"npm run dev:backend\"",
     "build": "next build",

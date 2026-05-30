@@ -1,6 +1,6 @@
 import type { NextConfig } from 'next';
 
-const backendOrigin = process.env.BACKEND_ORIGIN || 'http://localhost:9090';
+const backendOrigin = process.env.BACKEND_ORIGIN || 'http://localhost:2606';
 
 const nextConfig: NextConfig = {
   compress: true,
