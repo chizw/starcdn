@@ -182,9 +182,9 @@ func (s *Server) handleProxy(w http.ResponseWriter, r *http.Request, route Proxy
 	}
 
 	if s.database != nil {
-		banned, pattern, err := s.database.IsPathBanned(r.URL.Path)
+		banned, _, err := s.database.IsPathBanned(r.URL.Path)
 		if err == nil && banned {
-			http.Error(w, fmt.Sprintf("blocked by ban rule: %s", pattern), http.StatusForbidden)
+			http.Redirect(w, r, "/waf", http.StatusFound)
 			return
 		}
 	}
