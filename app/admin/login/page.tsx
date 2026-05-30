@@ -35,14 +35,16 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('/admin/api/login', {
+      const res = await fetch('/admin/api/proxy/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
       if (res.ok) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
         router.push('/admin');
+        router.refresh();
       } else {
         setError(data.error || '登录失败');
       }
@@ -57,7 +59,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const beginRes = await fetch('/admin/api/passkey/login/begin');
+      const beginRes = await fetch('/admin/api/proxy/passkey/login/begin');
       const assertion = await beginRes.json();
       if (!beginRes.ok) {
         setError(assertion.error || '登录初始化失败');
@@ -68,8 +70,14 @@ export default function LoginPage() {
         allowCredentials: [],
         userVerification: assertion.userVerification || 'preferred',
       };
-      const credential = await navigator.credentials.get({ publicKey });
-      const finishRes = await fetch('/admin/api/passkey/login/finish', {
+      const cred = await navigator.credentials.get({ publicKey });
+      if (!cred) {
+        setError('PASSKEY 验证被取消');
+        return;
+      }
+      const credential = cred as PublicKeyCredential;
+      const response = credential.response as AuthenticatorAssertionResponse;
+      const finishRes = await fetch('/admin/api/proxy/passkey/login/finish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -77,11 +85,11 @@ export default function LoginPage() {
           rawId: arrayBufferToBase64Url(credential.rawId),
           type: credential.type,
           response: {
-            clientDataJSON: arrayBufferToBase64Url(credential.response.clientDataJSON),
-            authenticatorData: arrayBufferToBase64Url(credential.response.authenticatorData),
-            signature: arrayBufferToBase64Url(credential.response.signature),
-            userHandle: credential.response.userHandle
-              ? arrayBufferToBase64Url(credential.response.userHandle)
+            clientDataJSON: arrayBufferToBase64Url(response.clientDataJSON),
+            authenticatorData: arrayBufferToBase64Url(response.authenticatorData),
+            signature: arrayBufferToBase64Url(response.signature),
+            userHandle: response.userHandle
+              ? arrayBufferToBase64Url(response.userHandle)
               : null,
           },
         }),

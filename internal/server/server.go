@@ -26,7 +26,6 @@ import (
 
 type Config struct {
 	Addr       string
-	StaticDir  string
 	CacheDir   string
 	FlushToken string
 	PurgeToken string
@@ -64,9 +63,6 @@ type cacheMeta struct {
 }
 
 func New(cfg Config) (*Server, error) {
-	if cfg.StaticDir == "" {
-		cfg.StaticDir = "out"
-	}
 	if cfg.CacheDir == "" {
 		cfg.CacheDir = ".cache/starcdn"
 	}
@@ -95,7 +91,7 @@ func New(cfg Config) (*Server, error) {
 			cfg.RPID = "localhost"
 		}
 		if cfg.RPOrigin == "" {
-			cfg.RPOrigin = "http://localhost:8080"
+			cfg.RPOrigin = "http://localhost:2607"
 		}
 
 		authSvc, err = auth.New(auth.Config{
@@ -167,7 +163,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.handleStatic(w, r)
+	http.NotFound(w, r)
 }
 
 func (s *Server) matchRoute(requestPath string) (ProxyRoute, bool) {
@@ -437,16 +433,6 @@ func writeFileAtomic(name string, data []byte) error {
 		return err
 	}
 	return os.Rename(tmp, name)
-}
-
-func (s *Server) handleStatic(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet && r.Method != http.MethodHead {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	fileServer := http.FileServer(http.Dir(s.cfg.StaticDir))
-	fileServer.ServeHTTP(w, r)
 }
 
 func (s *Server) setSecurityHeaders(w http.ResponseWriter) {

@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
       { source: '/wp/:path*', destination: `${backendOrigin}/wp/:path*` },
       { source: '/ajax/libs/:path*', destination: `${backendOrigin}/ajax/libs/:path*` },
       { source: '/avatar/:path*', destination: `${backendOrigin}/avatar/:path*` },
-      { source: '/admin/api/:path*', destination: `${backendOrigin}/admin/api/:path*` },
+      { source: '/admin/api/proxy/:path*', destination: `${backendOrigin}/admin/api/:path*` },
     ];
   },
   async headers() {

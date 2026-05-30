@@ -21,7 +21,7 @@ export default function BansPage() {
 
   const fetchRules = useCallback(async () => {
     try {
-      const res = await fetch('/admin/api/ban', { cache: 'no-store' });
+      const res = await fetch('/admin/api/proxy/ban', { cache: 'no-store' });
       if (!res.ok) {
         if (res.status === 401) {
           window.location.href = '/admin/login';
@@ -50,7 +50,7 @@ export default function BansPage() {
 
     setSubmitting(true);
     try {
-      const res = await fetch('/admin/api/ban', {
+      const res = await fetch('/admin/api/proxy/ban', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pattern, type: banType, reason }),
@@ -72,7 +72,7 @@ export default function BansPage() {
 
   async function handleDeleteRule(id: number) {
     try {
-      const res = await fetch(`/admin/api/ban/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/admin/api/proxy/ban/${id}`, { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || '删除失败');
