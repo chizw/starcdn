@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import '../../../styles/admin.css';
 
 interface BanRule {
   id: number;
