@@ -226,17 +226,12 @@ http://localhost:8080
 
 仓库包含完整 GitHub Actions 工作流：
 
-- Pull Request：执行依赖安装、ESLint、TypeScript 类型检查和预构建。
-- Push 到 `main` 或 `master`：完成代码审查预构建后，构建并推送 Docker 镜像到 GHCR。
-- Tag `v*.*.*`：发布 GitHub Release，并附带静态站点压缩包。
-- 镜像标签：默认分支推送 `latest`，分支、版本 Tag 和提交 SHA 会生成对应镜像标签。
+- Push 到 `main` 或 `master`：每次提交自动运行代码审查（安装依赖、ESLint、TypeScript 类型检查和预构建）。
+- 发布版本与推送镜像通过 GitHub Actions 手动触发（workflow_dispatch），支持选择是否发布 Docker 镜像、是否创建 Release 以及指定版本号。
 
 发布新版本：
 
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
+通过 GitHub Actions 页面手动运行 "CI/CD" 工作流，勾选发布选项并填写版本号。
 
 ## 反馈与安全
 
