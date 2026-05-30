@@ -129,7 +129,7 @@ https://jscdn.wuxit.cn/npm/jquery@3.6.0/dist/jquery.min.js?flush=1
 本项目采用 **Next.js 静态导出 + Go 统一服务** 架构：
 
 ```
-用户请求 → Go(:8080)
+用户请求 → Go(:2606)
               ├── 静态文件（out/）← Next.js 构建产物
               ├── 代理路由（/npm/, /gh/, /wp/, 等）
               └── 管理 API（/admin/api/*）← JWT + Passkey 认证
@@ -253,7 +253,7 @@ Go 后端会同时托管 `out/` 静态官网和公共资源代理路径。
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `STARCDN_ADDR` | `:8080` | Go 服务监听地址 |
+| `STARCDN_ADDR` | `:2606` | Go 服务监听地址 |
 | `STARCDN_STATIC_DIR` | `out` | 静态官网目录 |
 | `STARCDN_CACHE_DIR` | `.cache/starcdn` | 代理文件缓存目录 |
 | `STARCDN_CACHE_TTL` | `168h` | 代理缓存有效期 |
@@ -264,14 +264,14 @@ Go 后端会同时托管 `out/` 静态官网和公共资源代理路径。
 | `STARCDN_ADMIN_PASS` | 空 | 管理员密码 |
 | `STARCDN_JWT_SECRET` | 自动生成 | JWT 签名密钥 |
 | `STARCDN_RP_ID` | `localhost` | WebAuthn 依赖方 ID |
-| `STARCDN_RP_ORIGIN` | `http://localhost:8080` | WebAuthn 依赖方 Origin |
+| `STARCDN_RP_ORIGIN` | `http://localhost:2606` | WebAuthn 依赖方 Origin |
 
 完整的环境变量示例请参考 [.env.example](.env.example) 文件。
 
 ### 刷新缓存
 
 ```text
-http://localhost:8080/npm/jquery@3.6.0/dist/jquery.min.js?flush=1&flush_token=your-token
+http://localhost:2607/npm/jquery@3.6.0/dist/jquery.min.js?flush=1&flush_token=your-token
 ```
 
 如果未设置 `STARCDN_FLUSH_TOKEN`，只有本机或内网地址可以使用 `?flush=1` 刷新缓存。
@@ -299,10 +299,10 @@ docker pull ghcr.io/scfcn/starcdn:latest
 docker compose up -d
 ```
 
-默认容器端口映射为 `8080:8080`，启动后访问：
+默认容器端口映射为 `2607:2607`，启动后访问：
 
 ```text
-http://localhost:8080
+http://localhost:2607
 ```
 
 ## CI/CD
