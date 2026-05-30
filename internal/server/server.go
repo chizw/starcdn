@@ -255,8 +255,7 @@ func (s *Server) handlePublicStats(w http.ResponseWriter, r *http.Request) {
 
 	stats, err := s.database.GetServiceStats(prefixes)
 	if err != nil {
-		w.Write([]byte("[]"))
-		return
+		stats = nil
 	}
 
 	merged := make(map[string]*db.ServiceStats)
@@ -271,9 +270,14 @@ func (s *Server) handlePublicStats(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result := make([]*db.ServiceStats, 0, len(merged))
-	for _, s := range merged {
-		result = append(result, s)
+	order := []string{"Jsdelivr", "Gravatar", "Cdnjs"}
+	result := make([]*db.ServiceStats, 0, len(order))
+	for _, name := range order {
+		if s, ok := merged[name]; ok {
+			result = append(result, s)
+		} else {
+			result = append(result, &db.ServiceStats{Name: name, TotalRequests: 0, TotalBytes: 0, Online: true})
+		}
 	}
 
 	json.NewEncoder(w).Encode(result)

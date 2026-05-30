@@ -41,7 +41,9 @@ export default function ServiceStatus({ serviceName }: Props) {
         if (!res.ok || !mountedRef.current) return;
         const data: ServiceStats[] = await res.json();
         const found = data.find((s) => s.name === serviceName);
-        if (found && mountedRef.current) setStats(found);
+        if (found && mountedRef.current) {
+          setStats(found);
+        }
       } catch {
       } finally {
         if (mountedRef.current) setLoaded(true);
@@ -67,24 +69,24 @@ export default function ServiceStatus({ serviceName }: Props) {
     );
   }
 
-  if (!stats) return null;
+  const display = stats ?? { name: serviceName, total_requests: 0, total_bytes: 0, online: false };
 
   return (
     <div className="service-stats">
       <div className="stats-row">
         <div className="stats-item">
           <span className="stats-label">请求数</span>
-          <strong className="stats-value">{formatNumber(stats.total_requests)}</strong>
+          <strong className="stats-value">{formatNumber(display.total_requests)}</strong>
         </div>
         <div className="stats-item">
           <span className="stats-label">带宽</span>
-          <strong className="stats-value">{formatBytes(stats.total_bytes)}</strong>
+          <strong className="stats-value">{formatBytes(display.total_bytes)}</strong>
         </div>
       </div>
       <div className="stats-status">
-        <span className={`status-badge ${stats.online ? 'online' : 'offline'}`}>
+        <span className={`status-badge ${display.online ? 'online' : 'offline'}`}>
           <i className="status-dot" />
-          {stats.online ? '运行中' : '离线'}
+          {display.online ? '运行中' : '离线'}
         </span>
       </div>
     </div>
