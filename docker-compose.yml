@@ -1,0 +1,17 @@
+services:
+  starcdn:
+    image: ghcr.io/scfcn/starcdn:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      STARCDN_CACHE_TTL: 168h
+      STARCDN_FLUSH_TOKEN: ${STARCDN_FLUSH_TOKEN:-}
+    volumes:
+      - starcdn-cache:/app/cache
+    restart: unless-stopped
+
+volumes:
+  starcdn-cache:
