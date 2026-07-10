@@ -3,7 +3,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Button } from './components/ui/button';
+import { Badge } from './components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
+
+const reasons = [
+  { title: '路径不存在', desc: '请求的 URL 路径未匹配到任何代理路由或静态资源。' },
+  { title: '链接已失效', desc: '资源可能已被上游删除、重命名或从未存在。' },
+  { title: '拼写有误', desc: '检查 URL 中的包名、版本号与文件路径是否完整正确。' },
+];
 
 export default function NotFound() {
   const [seconds, setSeconds] = useState(10);
@@ -23,69 +30,60 @@ export default function NotFound() {
   }, []);
 
   return (
-    <main className="page-bg">
-      <div className="page-noise" />
-      <header className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto mt-[26px] py-4 flex items-center justify-between gap-6 border-b border-line max-[640px]:w-[min(calc(100%-26px),1160px)] max-[640px]:py-3">
-        <Link className="inline-flex items-center [filter:saturate(0.86)_contrast(0.96)]" href="/" aria-label="StarCDN 首页">
-          <Image src="/star/images/logo.png" width={156} height={48} alt="StarCDN" priority style={{ objectFit: 'contain' }} />
+    <main className="page-shell overflow-hidden">
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(39,39,42,0.10),transparent_26rem),linear-gradient(to_bottom,#fff,#fafafa)]" />
+      <header className="container-shell flex items-center justify-between border-b border-zinc-200/70 py-4">
+        <Link className="flex items-center gap-2 text-lg font-semibold tracking-tight text-zinc-950" href="/" aria-label="StarCDN 首页">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-950 text-sm font-semibold text-white">S</span>
+          <span>StarCDN</span>
         </Link>
-        <span className="inline-flex w-fit text-moss text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">Page Not Found</span>
+        <Badge variant="secondary">Page Not Found</Badge>
       </header>
 
-      <section className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto grid grid-cols-[minmax(0,1fr)_minmax(330px,0.76fr)] items-center gap-16 min-h-[710px] py-[78px_0_56px] max-[980px]:grid-cols-1 max-[980px]:min-h-0 max-[980px]:pt-16 max-[640px]:w-[min(calc(100%-26px),1160px)]" aria-labelledby="nf-title">
+      <section className="container-shell grid min-h-[calc(100vh-81px)] items-center gap-10 py-16 lg:grid-cols-[0.9fr_1.1fr]" aria-labelledby="nf-title">
         <div>
-          <span className="inline-flex w-fit text-moss text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">Error 404</span>
-          <h1 id="nf-title" className="font-heading mt-[22px] max-w-[840px] text-[clamp(4.2rem,8vw,8.8rem)] font-black text-foreground leading-[1.02] tracking-[-0.065em] text-balance max-[640px]:text-[clamp(3.05rem,17vw,5.1rem)]">页面不存在或已被移除。</h1>
-          <p className="mt-7 max-w-[660px] text-muted text-[clamp(1.04rem,1.9vw,1.22rem)] leading-[1.9]">你访问的资源路径未命中任何代理规则，也不对应站点内的静态页面。请确认地址是否正确。</p>
-          <div className="flex flex-wrap gap-3 mt-[38px]">
-            <Button asChild size="lg" className="rounded-full px-6 min-h-[52px] font-extrabold">
-              <Link href="/">返回首页</Link>
-            </Button>
-            <Button asChild variant="secondary" size="lg" className="rounded-full px-6 min-h-[52px] font-extrabold hover:bg-surface">
-              <a href="#nf-info">了解详情</a>
-            </Button>
+          <Badge variant="outline" className="mb-6 bg-white">Error 404</Badge>
+          <h1 id="nf-title" className="text-5xl font-semibold tracking-[-0.05em] text-zinc-950 sm:text-6xl">页面不存在或已被移除。</h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-600">你访问的资源路径未命中任何代理规则，也不对应站点内的静态页面。请确认地址是否正确。</p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link className="rounded-xl bg-zinc-950 px-5 py-3 text-sm font-medium text-white" href="/">返回首页</Link>
+            <Link className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-medium text-zinc-950 shadow-sm" href="#nf-info">了解详情</Link>
           </div>
         </div>
 
-        <div className="panel-bg p-8 grid gap-6 overflow-hidden" aria-hidden="true">
-          <div className="relative h-[88px] flex items-center justify-center gap-[14px]">
-            <span className="relative w-3 h-3 rounded-full bg-foreground shadow-[0_0_0_8px_rgba(23,23,19,0.05)] [animation:orbitPulse_3.4s_ease-in-out_infinite]" />
-            <span className="relative w-3 h-3 rounded-full bg-clay shadow-[0_0_0_8px_rgba(23,23,19,0.05)] [animation:orbitPulse_3.4s_ease-in-out_infinite_0.4s]" />
-            <span className="relative w-3 h-3 rounded-full bg-moss shadow-[0_0_0_8px_rgba(23,23,19,0.05)] [animation:orbitPulse_3.4s_ease-in-out_infinite_0.8s]" />
+        <Card className="overflow-hidden">
+          <div className="bg-zinc-950 p-8 text-white">
+            <div className="flex items-center justify-between text-sm text-zinc-400">
+              <span>StarCDN Router</span>
+              <span>Route not matched</span>
+            </div>
+            <strong className="mt-10 block text-8xl font-semibold tracking-[-0.08em]">404</strong>
+            <p className="mt-3 text-zinc-300">自动跳转倒计时</p>
           </div>
-          <div className="relative p-6 border border-line rounded-[var(--radius-lg)] bg-[rgba(255,252,245,0.48)]">
-            <span className="block text-muted text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">StarCDN Router</span>
-            <strong className="block mt-[14px] font-heading text-[clamp(3.2rem,6vw,5rem)] font-black leading-none tracking-[-0.08em] text-foreground">404</strong>
-            <p className="mt-3 text-muted text-[0.96rem] leading-[1.6]">Route not matched</p>
-          </div>
-          <div className="relative p-[18px_24px] border border-line-soft rounded-2xl bg-[rgba(255,252,245,0.5)] flex items-center justify-between">
-            <span className="text-moss text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">自动跳转</span>
-            <strong className="text-foreground font-heading text-[1.6rem] font-black tracking-[-0.06em]">{seconds}s</strong>
-          </div>
-        </div>
+          <CardContent className="p-6">
+            <div className="rounded-2xl bg-zinc-50 p-6 text-center">
+              <span className="text-sm text-zinc-500">自动跳转</span>
+              <strong className="mt-2 block text-5xl font-semibold tracking-tight text-zinc-950">{seconds}s</strong>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
-      <section className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto py-[42px_0_82px] max-[640px]:w-[min(calc(100%-26px),1160px)]" id="nf-info" aria-labelledby="nf-info-title">
-        <div className="max-w-[610px] mb-[38px]">
-          <span className="inline-flex w-fit text-moss text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">What happened</span>
-          <h2 id="nf-info-title" className="font-heading mt-[15px] text-[clamp(2.35rem,5vw,5.1rem)] font-black text-foreground leading-[1.02] tracking-[-0.065em] text-balance">为什么会看到这个页面？</h2>
-        </div>
-        <div className="grid grid-cols-3 border-y border-line max-[980px]:grid-cols-1">
-          <article className="p-[32px_30px] border-r border-line-soft last:border-r-0 transition-[background,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[rgba(255,252,245,0.38)] hover:-translate-y-1 max-[980px]:border-r-0 max-[980px]:border-b max-[980px]:border-line-soft last:max-[980px]:border-b-0">
-            <span className="text-[rgba(184,121,74,0.78)] text-[2.7rem] font-extrabold tracking-[-0.08em]">01</span>
-            <h3 className="mt-[18px] mb-[10px] text-foreground text-[1.34rem]">路径不存在</h3>
-            <p className="text-muted leading-[1.78]">请求的 URL 路径未匹配到任何代理路由或静态资源。</p>
-          </article>
-          <article className="p-[32px_30px] border-r border-line-soft last:border-r-0 transition-[background,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[rgba(255,252,245,0.38)] hover:-translate-y-1 max-[980px]:border-r-0 max-[980px]:border-b max-[980px]:border-line-soft last:max-[980px]:border-b-0">
-            <span className="text-[rgba(184,121,74,0.78)] text-[2.7rem] font-extrabold tracking-[-0.08em]">02</span>
-            <h3 className="mt-[18px] mb-[10px] text-foreground text-[1.34rem]">链接已失效</h3>
-            <p className="text-muted leading-[1.78]">资源可能已被上游删除、重命名或从未存在。</p>
-          </article>
-          <article className="p-[32px_30px] border-r border-line-soft last:border-r-0 transition-[background,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[rgba(255,252,245,0.38)] hover:-translate-y-1 max-[980px]:border-r-0 max-[980px]:border-b max-[980px]:border-line-soft last:max-[980px]:border-b-0">
-            <span className="text-[rgba(184,121,74,0.78)] text-[2.7rem] font-extrabold tracking-[-0.08em]">03</span>
-            <h3 className="mt-[18px] mb-[10px] text-foreground text-[1.34rem]">拼写有误</h3>
-            <p className="text-muted leading-[1.78]">检查 URL 中的包名、版本号与文件路径是否完整正确。</p>
-          </article>
+      <section className="container-shell pb-20" id="nf-info" aria-labelledby="nf-info-title">
+        <span className="section-kicker">What happened</span>
+        <h2 id="nf-info-title" className="section-title mt-3">为什么会看到这个页面？</h2>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {reasons.map((reason, index) => (
+            <Card key={reason.title}>
+              <CardHeader>
+                <Badge variant="outline" className="w-fit">{String(index + 1).padStart(2, '0')}</Badge>
+                <CardTitle>{reason.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm leading-6 text-zinc-600">{reason.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </section>
     </main>

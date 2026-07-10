@@ -1,6 +1,4 @@
 <div align="center">
-  <img src="public/star/images/logo.png" alt="StarCDN" width="180" />
-
   <h1>StarCDN</h1>
   <p><strong>稳定、快速、轻量的公共资源 CDN 镜像加速服务</strong></p>
 

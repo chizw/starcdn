@@ -1,8 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { Alert } from '../../../components/ui/alert';
 import { Button } from '../../../components/ui/button';
-import { Card } from '../../../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
 
 interface BanRule {
   id: number;
@@ -40,7 +44,6 @@ export default function BansPage() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchRules();
   }, [fetchRules]);
 
@@ -85,84 +88,78 @@ export default function BansPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <div className="inline-block w-[18px] h-[18px] border-2 border-line border-t-moss rounded-full [animation:spin_0.8s_linear_infinite]" />
+        <div className="loading-spinner" />
       </div>
     );
   }
 
   return (
-    <>
-      <h1 className="font-heading text-[clamp(2rem,4vw,3rem)] font-black text-foreground tracking-[-0.065em] m-0 mb-8">封禁规则</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">封禁规则</h1>
+        <p className="mt-2 text-sm text-zinc-500">管理会在回源与缓存读取前生效的 URL 拦截规则。</p>
+      </div>
 
-      {error && (
-        <div className="bg-[rgba(184,121,74,0.12)] border border-[rgba(184,121,74,0.3)] text-clay px-4 py-3 rounded-xl mb-5">{error}</div>
-      )}
+      {error && <Alert variant="destructive">{error}</Alert>}
 
-      <Card className="mb-7">
-        <h2 className="font-heading text-[1.34rem] font-extrabold text-foreground m-0 mb-5 tracking-[-0.02em]">添加封禁规则</h2>
-        <form className="flex flex-col gap-4" onSubmit={handleCreateRule}>
-          <div className="flex flex-col gap-1.5 flex-1 min-w-[160px] max-[768px]:min-w-0">
-            <label htmlFor="pattern" className="font-bold text-[0.84rem] text-ink-soft">匹配模式</label>
-            <input
-              id="pattern"
-              className="py-[10px] px-[14px] border border-line rounded-xl bg-[rgba(255,252,245,0.6)] text-foreground text-[0.94rem] transition-[border-color,box-shadow] focus:outline-none focus:border-moss focus:shadow-[0_0_0_3px_rgba(111,125,82,0.15)]"
-              type="text"
-              placeholder="例如：*.exe 或 /npm/twikoo*"
-              value={pattern}
-              onChange={(e) => setPattern(e.target.value)}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-1.5 flex-1 min-w-[160px] max-[768px]:min-w-0">
-            <label htmlFor="reason" className="font-bold text-[0.84rem] text-ink-soft">原因</label>
-            <input
-              id="reason"
-              className="py-[10px] px-[14px] border border-line rounded-xl bg-[rgba(255,252,245,0.6)] text-foreground text-[0.94rem] transition-[border-color,box-shadow] focus:outline-none focus:border-moss focus:shadow-[0_0_0_3px_rgba(111,125,82,0.15)]"
-              type="text"
-              placeholder="封禁原因说明（可选）"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
-          </div>
-          <div>
+      <Card>
+        <CardHeader>
+          <CardTitle>添加封禁规则</CardTitle>
+          <CardDescription>支持路径或通配符模式，例如 *.exe 或 /npm/twikoo*。</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end" onSubmit={handleCreateRule}>
+            <div className="space-y-2">
+              <Label htmlFor="pattern">匹配模式</Label>
+              <Input id="pattern" type="text" placeholder="例如：*.exe 或 /npm/twikoo*" value={pattern} onChange={(e) => setPattern(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reason">原因</Label>
+              <Input id="reason" type="text" placeholder="封禁原因说明（可选）" value={reason} onChange={(e) => setReason(e.target.value)} />
+            </div>
             <Button type="submit" disabled={submitting}>{submitting ? '添加中...' : '添加规则'}</Button>
-          </div>
-        </form>
+          </form>
+        </CardContent>
       </Card>
 
       <Card>
-        <h2 className="font-heading text-[1.34rem] font-extrabold text-foreground m-0 mb-5 tracking-[-0.02em]">规则列表</h2>
-        {rules.length > 0 ? (
-          <table className="w-full border-collapse text-[0.94rem] max-[768px]:text-[0.84rem]">
-            <thead>
-              <tr>
-                <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em] w-[60px]">ID</th>
-                <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em]">模式</th>
-                <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em]">原因</th>
-                <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em] w-[160px]">创建时间</th>
-                <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em] w-[80px]">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rules.map((rule) => (
-                <tr key={rule.id} className="hover:bg-[rgba(255,252,245,0.38)] last:[&>td]:border-b-0">
-                  <td className="px-4 py-[14px] border-b border-line-soft text-ink-soft font-extrabold">{rule.id}</td>
-                  <td className="px-4 py-[14px] border-b border-line-soft text-ink-soft font-mono text-[0.84rem] [word-break:break-all]">{rule.pattern}</td>
-                  <td className="px-4 py-[14px] border-b border-line-soft text-muted">{rule.reason || '--'}</td>
-                  <td className="px-4 py-[14px] border-b border-line-soft text-muted text-[0.84rem]">{rule.created_at ? new Date(rule.created_at).toLocaleString('zh-CN') : '--'}</td>
-                  <td className="px-4 py-[14px] border-b border-line-soft">
-                    <Button variant="outline" size="sm" className="border-[rgba(184,121,74,0.4)] bg-[rgba(184,121,74,0.1)] text-clay hover:bg-[rgba(184,121,74,0.22)]" onClick={() => handleDeleteRule(rule.id)}>
-                      删除
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="text-muted text-center py-10">暂无封禁规则</p>
-        )}
+        <CardHeader>
+          <CardTitle>规则列表</CardTitle>
+          <CardDescription>当前生效的拦截规则。</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {rules.length > 0 ? (
+            <div className="overflow-x-auto rounded-xl border border-zinc-200">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[70px]">ID</TableHead>
+                    <TableHead>模式</TableHead>
+                    <TableHead>原因</TableHead>
+                    <TableHead className="w-[180px]">创建时间</TableHead>
+                    <TableHead className="w-[90px]">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rules.map((rule) => (
+                    <TableRow key={rule.id}>
+                      <TableCell className="font-semibold text-zinc-950">{rule.id}</TableCell>
+                      <TableCell className="break-all font-mono text-xs text-zinc-800">{rule.pattern}</TableCell>
+                      <TableCell>{rule.reason || '--'}</TableCell>
+                      <TableCell className="text-xs">{rule.created_at ? new Date(rule.created_at).toLocaleString('zh-CN') : '--'}</TableCell>
+                      <TableCell>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteRule(rule.id)}>删除</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p className="py-10 text-center text-sm text-zinc-500">暂无封禁规则</p>
+          )}
+        </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

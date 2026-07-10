@@ -61,11 +61,9 @@ export default function ServiceStatus({ serviceName }: Props) {
 
   if (!loaded) {
     return (
-      <div className="mt-auto pt-[18px] border-t border-line-soft">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="h-8 rounded-md bg-line-soft [animation:skeletonPulse_1.6s_ease-in-out_infinite]" />
-          <div className="h-8 rounded-md bg-line-soft [animation:skeletonPulse_1.6s_ease-in-out_infinite]" />
-        </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="h-12 animate-pulse rounded-xl bg-zinc-100" />
+        <div className="h-12 animate-pulse rounded-xl bg-zinc-100" />
       </div>
     );
   }
@@ -73,23 +71,21 @@ export default function ServiceStatus({ serviceName }: Props) {
   const display = stats ?? { name: serviceName, total_requests: 0, total_bytes: 0, online: false };
 
   return (
-    <div className="mt-auto pt-[18px] border-t border-line-soft">
+    <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1">
-          <span className="text-muted text-[0.76rem] font-bold tracking-[0.06em] uppercase">请求数</span>
-          <strong className="text-foreground text-[1.4rem] font-extrabold tracking-[-0.06em] [font-variant-numeric:tabular-nums] leading-none">{formatNumber(display.total_requests)}</strong>
+        <div className="rounded-xl bg-zinc-50 p-3">
+          <span className="text-xs text-zinc-500">请求数</span>
+          <strong className="mt-1 block text-lg font-semibold text-zinc-950">{formatNumber(display.total_requests)}</strong>
         </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-muted text-[0.76rem] font-bold tracking-[0.06em] uppercase">带宽</span>
-          <strong className="text-foreground text-[1.4rem] font-extrabold tracking-[-0.06em] [font-variant-numeric:tabular-nums] leading-none">{formatBytes(display.total_bytes)}</strong>
+        <div className="rounded-xl bg-zinc-50 p-3">
+          <span className="text-xs text-zinc-500">带宽</span>
+          <strong className="mt-1 block text-lg font-semibold text-zinc-950">{formatBytes(display.total_bytes)}</strong>
         </div>
       </div>
-      <div className="mt-[14px] flex items-center">
-        <Badge variant={display.online ? 'default' : 'destructive'} className={`inline-flex items-center gap-[7px] text-[0.82rem] font-bold rounded-full px-2.5 py-0.5 ${display.online ? 'bg-transparent text-moss hover:bg-transparent' : 'bg-transparent text-destructive hover:bg-transparent'}`}>
-          <i className={`inline-block w-[7px] h-[7px] rounded-full bg-current ${display.online ? '[animation:pulseDot_2.4s_ease-in-out_infinite]' : ''}`} />
-          {display.online ? '运行中' : '离线'}
-        </Badge>
-      </div>
+      <Badge variant={display.online ? 'success' : 'destructive'}>
+        <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-current" />
+        {display.online ? '运行中' : '离线'}
+      </Badge>
     </div>
   );
 }

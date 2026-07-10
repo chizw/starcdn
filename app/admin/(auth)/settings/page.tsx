@@ -1,8 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { Alert } from '../../../components/ui/alert';
 import { Button } from '../../../components/ui/button';
-import { Card } from '../../../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
 
 interface PasskeyItem {
   id: number;
@@ -191,98 +195,84 @@ export default function SettingsPage() {
   }
 
   return (
-    <>
-      <h1 className="font-heading text-[clamp(2rem,4vw,3rem)] font-black text-foreground tracking-[-0.065em] m-0 mb-8">设置</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">设置</h1>
+        <p className="mt-2 text-sm text-zinc-500">管理账号密码和 PASSKEY 登录凭据。</p>
+      </div>
 
-      <Card className="mb-7">
-        <h2 className="font-heading text-[1.34rem] font-extrabold text-foreground m-0 mb-5 tracking-[-0.02em]">修改密码</h2>
-        {pwdError && (
-          <div className="bg-[rgba(184,121,74,0.12)] border border-[rgba(184,121,74,0.3)] text-clay px-4 py-3 rounded-xl text-[0.9rem] mb-4">{pwdError}</div>
-        )}
-        {pwdSuccess && (
-          <div className="bg-[rgba(111,125,82,0.12)] border border-[rgba(111,125,82,0.3)] text-moss px-4 py-3 rounded-xl text-[0.9rem] mb-4">{pwdSuccess}</div>
-        )}
-        <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5 flex-1 min-w-[160px] max-[768px]:min-w-0">
-            <label className="font-bold text-[0.84rem] text-ink-soft">当前密码</label>
-            <input
-              className="py-[10px] px-[14px] border border-line rounded-xl bg-[rgba(255,252,245,0.6)] text-foreground text-[0.94rem] transition-[border-color,box-shadow] focus:outline-none focus:border-moss focus:shadow-[0_0_0_3px_rgba(111,125,82,0.15)]"
-              type="password"
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
+      <Card>
+        <CardHeader>
+          <CardTitle>修改密码</CardTitle>
+          <CardDescription>保存后会回到登录页重新认证。</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-5 space-y-3">
+            {pwdError && <Alert variant="destructive">{pwdError}</Alert>}
+            {pwdSuccess && <Alert variant="success">{pwdSuccess}</Alert>}
           </div>
-          <div className="flex flex-col gap-1.5 flex-1 min-w-[160px] max-[768px]:min-w-0">
-            <label className="font-bold text-[0.84rem] text-ink-soft">新密码</label>
-            <input
-              className="py-[10px] px-[14px] border border-line rounded-xl bg-[rgba(255,252,245,0.6)] text-foreground text-[0.94rem] transition-[border-color,box-shadow] focus:outline-none focus:border-moss focus:shadow-[0_0_0_3px_rgba(111,125,82,0.15)]"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-            />
-          </div>
-          <div className="flex flex-col gap-1.5 flex-1 min-w-[160px] max-[768px]:min-w-0">
-            <label className="font-bold text-[0.84rem] text-ink-soft">确认新密码</label>
-            <input
-              className="py-[10px] px-[14px] border border-line rounded-xl bg-[rgba(255,252,245,0.6)] text-foreground text-[0.94rem] transition-[border-color,box-shadow] focus:outline-none focus:border-moss focus:shadow-[0_0_0_3px_rgba(111,125,82,0.15)]"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-            />
-          </div>
-          <div>
-            <Button type="submit" disabled={pwdLoading}>{pwdLoading ? '保存中...' : '修改密码'}</Button>
-          </div>
-        </form>
+          <form onSubmit={handleChangePassword} className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="oldPassword">当前密码</Label>
+              <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required autoComplete="current-password" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">新密码</Label>
+              <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required autoComplete="new-password" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">确认新密码</Label>
+              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required autoComplete="new-password" />
+            </div>
+            <div className="md:col-span-3">
+              <Button type="submit" disabled={pwdLoading}>{pwdLoading ? '保存中...' : '修改密码'}</Button>
+            </div>
+          </form>
+        </CardContent>
       </Card>
 
       <Card>
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-heading text-[1.34rem] font-extrabold text-foreground m-0 tracking-[-0.02em]">PASSKEY 管理</h2>
-          <Button variant="secondary" onClick={handleRegisterPasskey} disabled={regLoading}>{regLoading ? '注册中...' : '新增 PASSKEY'}</Button>
-        </div>
-        {regError && (
-          <div className="bg-[rgba(184,121,74,0.12)] border border-[rgba(184,121,74,0.3)] text-clay px-4 py-3 rounded-xl text-[0.9rem] mb-4">{regError}</div>
-        )}
-        {loading ? (
-          <div className="flex justify-center py-10">
-            <div className="inline-block w-[18px] h-[18px] border-2 border-line border-t-moss rounded-full [animation:spin_0.8s_linear_infinite]" />
+        <CardHeader className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <CardTitle>PASSKEY 管理</CardTitle>
+            <CardDescription>使用平台认证器提升控制台登录安全性。</CardDescription>
           </div>
-        ) : error ? (
-          <p className="text-muted text-center py-10">{error}</p>
-        ) : passkeys.length === 0 ? (
-          <p className="text-muted text-center py-10">暂无 PASSKEY</p>
-        ) : (
-          <div className="max-h-[480px] overflow-y-auto rounded-xl [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-line [&::-webkit-scrollbar-thumb]:rounded-sm [&::-webkit-scrollbar-thumb:hover]:bg-muted">
-            <table className="w-full border-collapse text-[0.94rem]">
-              <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em]">编号</th>
-                  <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em] w-[180px]">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {passkeys.map((pk) => (
-                  <tr key={pk.id} className="hover:bg-[rgba(255,252,245,0.38)] last:[&>td]:border-b-0">
-                    <td className="px-4 py-[14px] border-b border-line-soft text-ink-soft">PASSKEY #{pk.id + 1}</td>
-                    <td className="px-4 py-[14px] border-b border-line-soft">
-                      <Button variant="outline" size="sm" className="border-[rgba(184,121,74,0.4)] bg-[rgba(184,121,74,0.1)] text-clay hover:bg-[rgba(184,121,74,0.22)]" onClick={() => handleDeletePasskey(pk.id)}>
-                        删除
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+          <Button type="button" variant="outline" onClick={handleRegisterPasskey} disabled={regLoading}>{regLoading ? '注册中...' : '新增 PASSKEY'}</Button>
+        </CardHeader>
+        <CardContent>
+          {regError && <Alert variant="destructive" className="mb-5">{regError}</Alert>}
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <div className="loading-spinner" />
+            </div>
+          ) : error ? (
+            <p className="py-10 text-center text-sm text-zinc-500">{error}</p>
+          ) : passkeys.length === 0 ? (
+            <p className="py-10 text-center text-sm text-zinc-500">暂无 PASSKEY</p>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-zinc-200">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>编号</TableHead>
+                    <TableHead className="w-[120px]">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {passkeys.map((pk) => (
+                    <TableRow key={pk.id}>
+                      <TableCell className="font-medium text-zinc-950">PASSKEY #{pk.id + 1}</TableCell>
+                      <TableCell>
+                        <Button type="button" variant="destructive" size="sm" onClick={() => handleDeletePasskey(pk.id)}>删除</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

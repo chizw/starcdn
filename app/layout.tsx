@@ -24,13 +24,13 @@ export const metadata: Metadata = {
     siteName: 'StarCDN',
     title: 'StarCDN - 免费公共 CDN 镜像加速服务',
     description: '为 Jsdelivr、Gravatar、cdnjs 等公共资源提供稳定、快速、免费的 CDN 镜像加速服务，支持 HTTPS、HTTP/2 与 HTTP/3。',
-    images: [{ url: '/star/images/logo.png', width: 156, height: 48, alt: 'StarCDN' }],
+    images: [{ url: '/favicon.ico', width: 48, height: 48, alt: 'StarCDN' }],
   },
   twitter: {
     card: 'summary',
     title: 'StarCDN - 免费公共 CDN 镜像加速服务',
     description: '稳定、快速、轻量的公共资源 CDN 镜像加速服务。',
-    images: ['/star/images/logo.png'],
+    images: ['/favicon.ico'],
   },
   robots: {
     index: true,
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/favicon.ico',
-    apple: '/star/images/logo.png',
+    apple: '/favicon.ico',
   },
 };
 

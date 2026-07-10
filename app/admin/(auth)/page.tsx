@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
-import { Card } from '../../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 
 interface StatsData {
   total_requests?: number;
@@ -88,81 +90,93 @@ export default function DashboardPage() {
   if (loading && !stats) {
     return (
       <div className="flex justify-center py-20">
-        <div className="inline-block w-[18px] h-[18px] border-2 border-line border-t-moss rounded-full [animation:spin_0.8s_linear_infinite]" />
+        <div className="loading-spinner" />
       </div>
     );
   }
 
   if (error && !stats) {
     return (
-      <div className="text-center py-20 text-clay">
-        <p>{error}</p>
-        <Button variant="secondary" onClick={() => fetchStats(page)} className="mt-4">重试</Button>
-      </div>
+      <Card className="mx-auto max-w-md text-center">
+        <CardHeader>
+          <CardTitle>加载失败</CardTitle>
+          <CardDescription>{error}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={() => fetchStats(page)}>重试</Button>
+        </CardContent>
+      </Card>
     );
   }
 
+  const statCards = [
+    { label: '总请求数', value: stats?.total_requests ? formatNumber(stats.total_requests) : '--' },
+    { label: '总发送字节', value: stats?.total_bytes_sent ? formatBytes(stats.total_bytes_sent) : '--' },
+    { label: '独立 URL 数', value: stats?.unique_paths ? formatNumber(stats.unique_paths) : '--' },
+  ];
+
   return (
-    <>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-heading text-[clamp(2rem,4vw,3rem)] font-black text-foreground tracking-[-0.065em] m-0">仪表盘</h1>
-        <div className="inline-flex items-center gap-2 text-muted text-[0.84rem] font-bold">
-          <span className="w-2 h-2 rounded-full bg-moss [animation:pulse_2s_ease-in-out_infinite]" />
-          自动刷新 30s · {lastRefresh.toLocaleTimeString('zh-CN')}
+    <div className="space-y-6">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">仪表盘</h1>
+          <p className="mt-2 text-sm text-zinc-500">查看 fastjs.qixz.cn 请求、流量和热门资源。</p>
         </div>
+        <Badge variant="success">自动刷新 30s · {lastRefresh.toLocaleTimeString('zh-CN')}</Badge>
       </div>
 
-      <div className="grid grid-cols-3 gap-5 mb-7 max-[768px]:grid-cols-1">
-        <Card className="transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-[0_26px_80px_rgba(49,41,26,0.14)]">
-          <strong className="block text-[clamp(2rem,4vw,3rem)] font-black text-foreground tracking-[-0.07em] leading-none">{stats?.total_requests ? formatNumber(stats.total_requests) : '--'}</strong>
-          <span className="block mt-[10px] text-muted font-bold text-[0.92rem]">总请求数</span>
-        </Card>
-        <Card className="transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-[0_26px_80px_rgba(49,41,26,0.14)]">
-          <strong className="block text-[clamp(2rem,4vw,3rem)] font-black text-foreground tracking-[-0.07em] leading-none">{stats?.total_bytes_sent ? formatBytes(stats.total_bytes_sent) : '--'}</strong>
-          <span className="block mt-[10px] text-muted font-bold text-[0.92rem]">总发送字节</span>
-        </Card>
-        <Card className="transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-[0_26px_80px_rgba(49,41,26,0.14)]">
-          <strong className="block text-[clamp(2rem,4vw,3rem)] font-black text-foreground tracking-[-0.07em] leading-none">{stats?.unique_paths ? formatNumber(stats.unique_paths) : '--'}</strong>
-          <span className="block mt-[10px] text-muted font-bold text-[0.92rem]">独立 URL 数</span>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-3">
+        {statCards.map((item) => (
+          <Card key={item.label}>
+            <CardContent className="p-6">
+              <strong className="block text-4xl font-semibold tracking-tight text-zinc-950">{item.value}</strong>
+              <span className="mt-2 block text-sm text-zinc-500">{item.label}</span>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Card>
-        <h2 className="font-heading text-[1.34rem] font-extrabold text-foreground m-0 mb-5 tracking-[-0.02em]">Top URL</h2>
-        {stats?.top_urls && stats.top_urls.length > 0 ? (
-          <>
-            <div className="max-h-[480px] overflow-y-auto rounded-xl [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-line [&::-webkit-scrollbar-thumb]:rounded-sm [&::-webkit-scrollbar-thumb:hover]:bg-muted">
-              <table className="w-full border-collapse text-[0.94rem] max-[768px]:text-[0.84rem]">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em]">URL</th>
-                    <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em] w-[100px]">请求数</th>
-                    <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em] w-[100px]">流量</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.top_urls.map((item, i) => (
-                    <tr key={i} className="hover:bg-[rgba(255,252,245,0.38)] last:[&>td]:border-b-0">
-                      <td className="px-4 py-[14px] border-b border-line-soft text-ink-soft font-mono text-[0.84rem] [word-break:break-all]">{item.request_path}</td>
-                      <td className="px-4 py-[14px] border-b border-line-soft text-ink-soft font-extrabold">{formatNumber(item.request_count)}</td>
-                      <td className="px-4 py-[14px] border-b border-line-soft text-muted">{formatBytes(item.bytes_sent)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {(stats.total_pages || 0) > 1 && (
-              <div className="flex items-center justify-center gap-4 pt-5 border-t border-line-soft mt-5">
-                <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={page <= 1} className="disabled:opacity-40 disabled:cursor-not-allowed">上一页</Button>
-                <span className="text-muted font-bold text-[0.84rem]">第 {page} / {stats.total_pages} 页</span>
-                <Button variant="outline" size="sm" onClick={handleNextPage} disabled={page >= (stats.total_pages || 1)} className="disabled:opacity-40 disabled:cursor-not-allowed">下一页</Button>
+        <CardHeader>
+          <CardTitle>Top URL</CardTitle>
+          <CardDescription>按请求量排序的热门资源路径。</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {stats?.top_urls && stats.top_urls.length > 0 ? (
+            <>
+              <div className="overflow-x-auto rounded-xl border border-zinc-200">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>URL</TableHead>
+                      <TableHead className="w-[110px]">请求数</TableHead>
+                      <TableHead className="w-[110px]">流量</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stats.top_urls.map((item, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="break-all font-mono text-xs text-zinc-800">{item.request_path}</TableCell>
+                        <TableCell className="font-semibold text-zinc-950">{formatNumber(item.request_count)}</TableCell>
+                        <TableCell>{formatBytes(item.bytes_sent)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-            )}
-          </>
-        ) : (
-          <p className="text-muted text-center py-10">暂无数据</p>
-        )}
+              {(stats.total_pages || 0) > 1 && (
+                <div className="mt-5 flex items-center justify-end gap-3">
+                  <Button variant="outline" onClick={handlePrevPage} disabled={page <= 1}>上一页</Button>
+                  <span className="text-sm text-zinc-500">第 {page} / {stats.total_pages} 页</span>
+                  <Button variant="outline" onClick={handleNextPage} disabled={page >= (stats.total_pages || 1)}>下一页</Button>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="py-10 text-center text-sm text-zinc-500">暂无数据</p>
+          )}
+        </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

@@ -1,8 +1,17 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Button } from '@/app/components/ui/button';
+import { Button } from '../../components/ui/button';
+import { cn } from '../../lib/utils';
+
+const navItems = [
+  { label: '仪表盘', href: '/admin' },
+  { label: '封禁规则', href: '/admin/bans' },
+  { label: '设置', href: '/admin/settings' },
+];
 
 function isTokenValid(): boolean {
   try {
@@ -20,6 +29,7 @@ function isTokenValid(): boolean {
 }
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [authed] = useState(() => {
     if (typeof window === 'undefined') return false;
     return isTokenValid();
@@ -41,31 +51,45 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   if (!authed) {
     return (
-      <div className="page-bg-admin">
-        <div className="flex justify-center items-center h-screen">
-          <div className="inline-block w-[18px] h-[18px] border-2 border-line border-t-moss rounded-full [animation:spin_0.8s_linear_infinite]" />
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+        <div className="loading-spinner" />
       </div>
     );
   }
 
   return (
-    <div className="page-bg-admin [&>*]:relative [&>*]:z-[1]">
-      <nav className="flex items-center justify-between gap-6 px-9 py-4 border-b border-line bg-[rgba(247,241,230,0.6)] backdrop-blur-[12px] max-[768px]:px-5 max-[768px]:flex-wrap">
-        <a href="/admin" className="flex items-center gap-3 no-underline">
-          <Image src="/favicon.ico" alt="StarCDN" width={32} height={32} className="[filter:saturate(0.86)_contrast(0.96)]" />
-          <span className="font-heading text-[1.1rem] font-black text-foreground tracking-[-0.02em]">管理后台</span>
-        </a>
-        <div className="flex items-center gap-1">
-          <a href="/admin" className="px-4 py-[10px] text-muted text-[0.92rem] font-bold rounded-full transition-[color,background] duration-300 hover:text-foreground hover:bg-[rgba(255,252,245,0.5)]">仪表盘</a>
-          <a href="/admin/bans" className="px-4 py-[10px] text-muted text-[0.92rem] font-bold rounded-full transition-[color,background] duration-300 hover:text-foreground hover:bg-[rgba(255,252,245,0.5)]">封禁规则</a>
-          <a href="/admin/settings" className="px-4 py-[10px] text-muted text-[0.92rem] font-bold rounded-full transition-[color,background] duration-300 hover:text-foreground hover:bg-[rgba(255,252,245,0.5)]">设置</a>
-        </div>
-        <Button variant="outline" className="rounded-full text-ink-soft" onClick={handleLogout}>
-          退出
-        </Button>
-      </nav>
-      <main className="w-[min(1160px,calc(100%-44px))] mx-auto py-9 pb-20">
+    <div className="min-h-screen bg-zinc-50 text-zinc-950">
+      <div className="border-b border-zinc-200 bg-white/80 backdrop-blur-xl">
+        <nav className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+          <Link href="/admin" className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-sm">
+              <Image src="/favicon.ico" alt="StarCDN" width={24} height={24} />
+            </span>
+            <div>
+              <strong className="block text-sm font-semibold text-zinc-950">StarCDN Admin</strong>
+              <span className="text-xs text-zinc-500">fastjs.qixz.cn 控制台</span>
+            </div>
+          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:gap-6">
+            <div className="flex rounded-xl border border-zinc-200 bg-zinc-50 p-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition hover:text-zinc-950',
+                    pathname === item.href && 'bg-white text-zinc-950 shadow-sm',
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+            <Button type="button" variant="outline" onClick={handleLogout}>退出</Button>
+          </div>
+        </nav>
+      </div>
+      <main className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-6 lg:px-8">
         {children}
       </main>
     </div>

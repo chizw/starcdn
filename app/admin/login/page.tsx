@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Alert } from '../../components/ui/alert';
 import { Button } from '../../components/ui/button';
-import { Card } from '../../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { cn } from '../../lib/utils';
 
 function base64UrlToArrayBuffer(base64url: string): ArrayBuffer {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
@@ -121,54 +125,52 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-bg">
-      <Card className="relative z-[1] w-[min(420px,92vw)] rounded-[var(--radius-xl)]! px-8 py-10 shadow-[0_26px_80px_rgba(49,41,26,0.14)]">
-        <h1 className="font-heading text-[1.8rem] font-black text-foreground text-center m-0 mb-2 tracking-[-0.04em]">Star<span className="text-clay">CDN</span> Admin</h1>
-        <p className="text-center text-muted text-[0.94rem] m-0 mb-7">管理后台登录</p>
+    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-5 py-10 text-zinc-950">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(39,39,42,0.10),transparent_30rem)]" />
+      <Card className="relative w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950 text-lg font-semibold text-white">S</div>
+          <CardTitle className="text-2xl">StarCDN Admin</CardTitle>
+          <CardDescription>登录 fastjs.qixz.cn 管理控制台</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-5 grid grid-cols-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1">
+            {(['password', 'passkey'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                className={cn(
+                  'rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition',
+                  activeTab === tab && 'bg-white text-zinc-950 shadow-sm',
+                )}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab === 'password' ? '密码登录' : 'PASSKEY 登录'}
+              </button>
+            ))}
+          </div>
 
-        <div className="flex border-b border-line-soft mb-6">
-          <button
-            className={`flex-1 py-[10px] text-center bg-transparent border-none border-b-2 ${activeTab === 'password' ? 'text-moss border-b-moss' : 'text-muted border-b-transparent'} font-bold text-[0.92rem] cursor-pointer transition-[color,border-color] duration-300`}
-            onClick={() => setActiveTab('password')}
-          >
-            密码登录
-          </button>
-          <button
-            className={`flex-1 py-[10px] text-center bg-transparent border-none border-b-2 ${activeTab === 'passkey' ? 'text-moss border-b-moss' : 'text-muted border-b-transparent'} font-bold text-[0.92rem] cursor-pointer transition-[color,border-color] duration-300`}
-            onClick={() => setActiveTab('passkey')}
-          >
-            PASSKEY 登录
-          </button>
-        </div>
+          {error && <Alert variant="destructive" className="mb-5">{error}</Alert>}
 
-        <div className={`bg-[rgba(184,121,74,0.12)] border border-[rgba(184,121,74,0.3)] text-clay px-4 py-3 rounded-xl text-[0.9rem] ${error ? 'block' : 'hidden'}`}>{error}</div>
-
-        <form className={`flex flex-col gap-4 ${activeTab === 'password' ? 'flex' : 'hidden'}`} onSubmit={handlePasswordLogin}>
-          <input
-            className="py-3 px-4 border border-line rounded-xl bg-[rgba(255,252,245,0.6)] text-foreground text-base focus:outline-none focus:border-moss focus:shadow-[0_0_0_3px_rgba(111,125,82,0.15)]"
-            type="text"
-            placeholder="用户名"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            autoComplete="username"
-          />
-          <input
-            className="py-3 px-4 border border-line rounded-xl bg-[rgba(255,252,245,0.6)] text-foreground text-base focus:outline-none focus:border-moss focus:shadow-[0_0_0_3px_rgba(111,125,82,0.15)]"
-            type="password"
-            placeholder="密码"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
-          <Button type="submit" disabled={loading} className="w-full">{loading ? '登录中...' : '登录'}</Button>
-        </form>
-
-        <div className={`flex flex-col gap-4 ${activeTab === 'passkey' ? 'flex' : 'hidden'}`}>
-          <Button type="button" onClick={handlePasskeyLogin} disabled={loading} className="w-full bg-[#242723]!">{loading ? '验证中...' : '使用 PASSKEY 登录'}</Button>
-        </div>
+          {activeTab === 'password' ? (
+            <form className="space-y-4" onSubmit={handlePasswordLogin}>
+              <div className="space-y-2">
+                <Label htmlFor="username">用户名</Label>
+                <Input id="username" type="text" placeholder="请输入用户名" value={username} onChange={(e) => setUsername(e.target.value)} required autoComplete="username" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">密码</Label>
+                <Input id="password" type="password" placeholder="请输入密码" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>{loading ? '登录中...' : '登录'}</Button>
+            </form>
+          ) : (
+            <Button type="button" className="w-full" onClick={handlePasskeyLogin} disabled={loading}>
+              {loading ? '验证中...' : '使用 PASSKEY 登录'}
+            </Button>
+          )}
+        </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

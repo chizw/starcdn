@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { cn } from '@/app/lib/utils'
+import { cn } from '../../lib/utils'
 
 interface TabsContextValue {
   value: string
@@ -57,7 +57,7 @@ const TabsList = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('flex border-b border-line-soft', className)}
+    className={cn('flex border-b border-zinc-200', className)}
     {...props}
   />
 ))
@@ -79,10 +79,10 @@ const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
         role="tab"
         aria-selected={isActive}
         className={cn(
-          'flex-1 py-2.5 text-center font-bold border-b-2 transition-colors',
+          'flex-1 border-b-2 py-2.5 text-center font-medium transition-colors',
           isActive
-            ? 'text-moss border-moss'
-            : 'border-transparent text-muted',
+            ? 'border-zinc-950 text-zinc-950'
+            : 'border-transparent text-zinc-500',
           className,
         )}
         onClick={() => context.onValueChange(value)}

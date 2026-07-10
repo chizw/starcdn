@@ -1,8 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import ServiceStatus from './components/ServiceStatus';
-import { Button } from './components/ui/button';
-import { Card } from './components/ui/card';
+import { Badge } from './components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
 
 const navItems = [
   { label: '能力', href: '#features' },
@@ -23,6 +23,13 @@ const services = [
   { name: 'Jsdelivr', desc: 'NPM / GitHub 公共库镜像', image: '/star/images/m-jsdelivr.png' },
   { name: 'Gravatar', desc: '头像资源稳定加速', image: '/star/images/m-gravater.png' },
   { name: 'Cdnjs', desc: '前端库资源快速分发', image: '/star/images/m-google.png' },
+];
+
+const partners = [
+  { name: '81Cloud', desc: '云计算资源协同', image: '/img/81cloud.webp' },
+  { name: 'Cloudflare', desc: '边缘网络生态', image: '/img/cloudflare.svg' },
+  { name: 'Aliyun ESA', desc: '边缘安全加速', image: '/img/esa.svg' },
+  { name: 'Google', desc: '开放网络生态', image: '/img/google.svg' },
 ];
 
 const features = [
@@ -91,240 +98,242 @@ const faqJsonLd = {
 
 export default function Home() {
   return (
-    <main className="page-bg">
+    <main className="page-shell overflow-hidden">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-      <div className="page-noise" />
 
-      {/* ── Header ── */}
-      <header className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto mt-[26px] py-4 flex items-center justify-between gap-6 border-b border-line max-[640px]:w-[min(calc(100%-26px),1160px)] max-[640px]:py-3">
-        <Link className="inline-flex items-center [filter:saturate(0.86)_contrast(0.96)]" href="/" aria-label="StarCDN 首页">
-          <Image src="/star/images/logo.png" width={156} height={48} alt="StarCDN" priority style={{ objectFit: 'contain' }} />
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(39,39,42,0.08),transparent_28rem),linear-gradient(to_bottom,#fff,#fafafa_45%,#f4f4f5)]" />
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(to_right,rgba(24,24,27,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(24,24,27,0.045)_1px,transparent_1px)] bg-[size:80px_80px] [mask-image:linear-gradient(to_bottom,black,transparent_80%)]" />
+
+      <header className="container-shell sticky top-0 z-20 flex items-center justify-between border-b border-zinc-200/70 bg-zinc-50/80 py-4 backdrop-blur-xl">
+        <Link className="flex items-center gap-2 text-lg font-semibold tracking-tight text-zinc-950" href="/" aria-label="StarCDN 首页">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-950 text-sm font-semibold text-white">S</span>
+          <span>StarCDN</span>
         </Link>
-        <nav className="flex items-center gap-1 max-[980px]:hidden" aria-label="主导航">
+        <nav className="hidden items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 text-sm text-zinc-600 shadow-sm md:flex" aria-label="主导航">
           {navItems.map((item) => (
-            <a key={item.href} href={item.href} className="nav-link-underline relative px-[13px] py-[10px] text-[0.92rem] font-bold tracking-[0.01em] text-[rgba(23,23,19,0.68)] transition-colors duration-300 hover:text-foreground">{item.label}</a>
+            <a key={item.href} href={item.href} className="rounded-full px-4 py-2 transition hover:bg-zinc-100 hover:text-zinc-950">{item.label}</a>
           ))}
         </nav>
-        <a className="border border-line rounded-full px-[17px] py-[10px] text-[0.92rem] font-bold tracking-[0.01em] text-[rgba(23,23,19,0.68)] bg-[rgba(255,252,245,0.36)] transition-colors duration-300 hover:text-foreground max-[640px]:px-[13px] max-[640px]:py-[9px]" href="https://github.com/chizw/StarCDN" target="_blank" rel="noreferrer">GitHub</a>
+        <a className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800" href="https://github.com/chizw/StarCDN" target="_blank" rel="noreferrer">GitHub</a>
       </header>
 
-      {/* ── Hero ── */}
-      <section className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto grid grid-cols-[minmax(0,1fr)_minmax(330px,0.76fr)] items-center gap-16 min-h-[710px] py-[78px_0_56px] max-[980px]:grid-cols-1 max-[980px]:min-h-0 max-[980px]:pt-16 max-[640px]:w-[min(calc(100%-26px),1160px)]">
+      <section className="container-shell grid min-h-[calc(100vh-81px)] items-center gap-12 py-20 lg:grid-cols-[1.04fr_0.96fr]">
         <div>
-          <span className="inline-flex w-fit text-moss text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">Public CDN for modern builders</span>
-          <h1 className="font-heading mt-[22px] max-w-[840px] text-[clamp(4.2rem,8vw,8.8rem)] font-black text-foreground leading-[1.02] tracking-[-0.065em] text-balance max-[640px]:text-[clamp(3.05rem,17vw,5.1rem)]">让公共资源加载像星光一样快。</h1>
-          <p className="mt-7 max-w-[660px] text-muted text-[clamp(1.04rem,1.9vw,1.22rem)] leading-[1.9]">Star⭐CDN 为 Jsdelivr、Gravatar、Cdnjs 等公共资源提供稳定、轻量、无需配置的镜像加速服务，专为国内访问体验重新设计。</p>
-          <div className="flex flex-wrap gap-3 mt-[38px]">
-            <Button asChild size="lg" className="rounded-full px-6 min-h-[52px] font-extrabold">
-              <a href="#usage">立即接入</a>
-            </Button>
-            <Button asChild variant="secondary" size="lg" className="rounded-full px-6 min-h-[52px] font-extrabold hover:bg-surface">
-              <a href="#features">了解能力</a>
-            </Button>
+          <Badge variant="outline" className="mb-6 bg-white/70">Public CDN for modern builders</Badge>
+          <h1 className="max-w-4xl text-5xl font-semibold tracking-[-0.05em] text-zinc-950 sm:text-6xl lg:text-7xl">让公共资源加载像控制台指标一样稳定。</h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-600">Star⭐CDN 为 Jsdelivr、Gravatar、Cdnjs 等公共资源提供稳定、轻量、无需配置的镜像加速服务，专为国内访问体验重新设计。</p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a className="rounded-xl bg-zinc-950 px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800" href="#usage">立即接入</a>
+            <a className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-medium text-zinc-950 shadow-sm transition hover:bg-zinc-50" href="#features">了解能力</a>
           </div>
         </div>
-        <div className="relative min-h-[500px] isolate max-[980px]:min-h-[420px] max-[640px]:min-h-[310px]" aria-hidden="true">
-          <div className="signal-field">
-            <span className="absolute z-[2] w-3 h-3 rounded-full bg-foreground shadow-[0_0_0_8px_rgba(23,23,19,0.05)] top-[18%] left-[36%]" />
-            <span className="absolute z-[2] w-3 h-3 rounded-full bg-moss shadow-[0_0_0_8px_rgba(23,23,19,0.05)] top-[38%] right-[21%]" />
-            <span className="absolute z-[2] w-3 h-3 rounded-full bg-clay shadow-[0_0_0_8px_rgba(23,23,19,0.05)] left-[24%] bottom-[25%]" />
-            <span className="absolute z-[2] w-3 h-3 rounded-full bg-brass shadow-[0_0_0_8px_rgba(23,23,19,0.05)] right-[34%] bottom-[17%]" />
-            <i className="absolute z-[1] h-px bg-gradient-to-r from-transparent via-[rgba(36,32,23,0.3)] to-transparent origin-left top-[29%] left-[38%] w-[35%] rotate-[18deg]" />
-            <i className="absolute z-[1] h-px bg-gradient-to-r from-transparent via-[rgba(36,32,23,0.3)] to-transparent origin-left top-[49%] left-[26%] w-[49%] -rotate-[14deg]" />
-            <i className="absolute z-[1] h-px bg-gradient-to-r from-transparent via-[rgba(36,32,23,0.3)] to-transparent origin-left bottom-[28%] left-[26%] w-[40%] rotate-[21deg]" />
-          </div>
-          <div className="absolute right-[3%] bottom-[10%] z-[3] py-[22px] px-6 border-l border-line bg-gradient-to-r from-[rgba(247,241,230,0.88)] to-[rgba(247,241,230,0.28)] backdrop-blur-[16px] max-[640px]:right-0 max-[640px]:bottom-[4%]">
-            <span className="block text-muted text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">median latency</span>
-            <strong className="block mt-[5px] text-[3.4rem] leading-none tracking-[-0.08em]">30ms</strong>
+
+        <div className="relative rounded-[2rem] border border-zinc-200 bg-white p-4 shadow-2xl shadow-zinc-200/60">
+          <div className="rounded-[1.5rem] border border-zinc-100 bg-zinc-950 p-5 text-white">
+            <div className="mb-10 flex items-center justify-between text-xs text-zinc-400">
+              <span>fastjs.qixz.cn</span>
+              <span>live edge routing</span>
+            </div>
+            <div className="grid gap-3">
+              {networkFlows.map((flow, index) => (
+                <div key={flow.from} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <div className="mb-3 flex items-center gap-3 text-xs text-zinc-400">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-zinc-950">0{index + 1}</span>
+                    <span>{flow.from}</span>
+                    <span className="h-px flex-1 bg-white/15" />
+                    <span>{flow.to}</span>
+                  </div>
+                  <p className="text-sm leading-6 text-zinc-300">{flow.desc}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 rounded-2xl bg-white p-5 text-zinc-950">
+              <span className="text-xs font-medium uppercase tracking-widest text-zinc-500">median latency</span>
+              <div className="mt-2 flex items-end justify-between">
+                <strong className="text-5xl font-semibold tracking-tighter">30ms</strong>
+                <Badge variant="success">healthy</Badge>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Metrics Strip ── */}
-      <section className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto grid grid-cols-4 mb-[104px] border-y border-line max-[980px]:grid-cols-2 max-[640px]:w-[min(calc(100%-26px),1160px)] max-[640px]:grid-cols-1" aria-label="服务指标">
-        {metrics.map((metric, i) => (
-          <div key={metric.label} className={`py-7 px-[26px] border-r border-line-soft last:border-r-0 max-[980px]:border-b max-[980px]:border-r-0 [&:nth-child(2)]:max-[980px]:border-r-0 [&:nth-child(-n+2)]:max-[980px]:border-b max-[640px]:border-b max-[640px]:border-r-0 last:max-[640px]:border-b-0`}>
-            <strong className="block text-foreground text-[clamp(2.1rem,4vw,3.8rem)] leading-none tracking-[-0.07em]">{metric.value}</strong>
-            <span className="block mt-[13px] text-muted font-bold">{metric.label}</span>
-          </div>
+      <section className="container-shell grid gap-4 pb-16 sm:grid-cols-2 lg:grid-cols-4" aria-label="服务指标">
+        {metrics.map((metric) => (
+          <Card key={metric.label} className="bg-white/80">
+            <CardContent className="p-6">
+              <strong className="block text-4xl font-semibold tracking-tight text-zinc-950">{metric.value}</strong>
+              <span className="mt-2 block text-sm text-zinc-500">{metric.label}</span>
+            </CardContent>
+          </Card>
         ))}
       </section>
 
-      {/* ── Service Section ── */}
-      <section className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto py-[42px_0_82px] max-[640px]:w-[min(calc(100%-26px),1160px)]">
-        <div className="max-w-[780px] mb-[38px] [&.compact]:max-w-[610px] compact">
-          <span className="inline-flex w-fit text-moss text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">镜像资源</span>
-          <h2 className="font-heading mt-[15px] text-[clamp(2.35rem,5vw,5.1rem)] font-black text-foreground leading-[1.02] tracking-[-0.065em] text-balance">把常用资源纳入同一条高速轨道</h2>
+      <section className="container-shell py-16">
+        <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <span className="section-kicker">镜像资源</span>
+            <h2 className="section-title mt-3">把常用资源纳入同一条高速轨道</h2>
+          </div>
         </div>
-        <div className="grid grid-cols-3 border-y border-line max-[980px]:grid-cols-1">
+        <div className="grid gap-5 md:grid-cols-3">
           {services.map((service) => (
-            <Card key={service.name} className="flex flex-col p-[34px_30px] border-r border-line-soft last:border-r-0 bg-transparent border-0 rounded-none shadow-none transition-[background,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[rgba(255,252,245,0.38)] hover:-translate-y-1 max-[980px]:border-r-0 max-[980px]:border-b max-[980px]:border-line-soft last:max-[980px]:border-b-0">
-              <Image src={service.image} width={76} height={76} alt={`${service.name} CDN 镜像加速`} style={{ filter: 'saturate(0.74) contrast(0.96)' }} />
-              <h3 className="mt-[18px] mb-[10px] text-foreground text-[1.34rem]">{service.name}</h3>
-              <p className="text-muted leading-[1.78]">{service.desc}</p>
-              <ServiceStatus serviceName={service.name} />
+            <Card key={service.name} className="transition hover:-translate-y-1 hover:shadow-lg">
+              <CardHeader>
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-100 p-3 shadow-sm">
+                  <Image src={service.image} width={64} height={64} alt={`${service.name} CDN 镜像加速`} className="h-10 w-10 object-contain" />
+                </div>
+                <CardTitle>{service.name}</CardTitle>
+                <CardDescription>{service.desc}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ServiceStatus serviceName={service.name} />
+              </CardContent>
             </Card>
           ))}
         </div>
       </section>
 
-      {/* ── Feature Section ── */}
-      <section id="features" className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto py-[42px_0_82px] max-[640px]:w-[min(calc(100%-26px),1160px)]">
-        <div className="max-w-[780px] mb-[38px]">
-          <span className="inline-flex w-fit text-moss text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">核心能力</span>
-          <h2 className="font-heading mt-[15px] text-[clamp(2.35rem,5vw,5.1rem)] font-black text-foreground leading-[1.02] tracking-[-0.065em] text-balance">克制、稳定、快速，重新梳理 CDN 产品表达。</h2>
-          <p className="text-muted text-[1.06rem] leading-[1.85]">以性能、安全、透明和易接入为设计中心，把旧式组件堆叠重构成更清晰的产品叙事。</p>
-        </div>
-        <div className="grid grid-cols-3 gap-px bg-line max-[980px]:grid-cols-2 max-[640px]:grid-cols-1">
-          {features.map((feature, i) => {
-            const isDark = i === 1 || i === 4;
-            return (
-              <article key={feature.title} className={`min-h-[272px] p-8 transition-[background,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] max-[640px]:min-h-0 max-[640px]:p-[26px_22px] ${isDark ? 'bg-[#242723] hover:bg-[#2a2d28]' : 'bg-[rgba(247,241,230,0.82)] hover:bg-[rgba(255,252,245,0.74)]'} hover:-translate-y-[3px]`}>
-                <span className={`inline-flex w-fit text-[0.74rem] font-extrabold tracking-[0.16em] uppercase ${isDark ? 'text-[rgba(214,196,153,0.86)]' : 'text-moss'}`}>{feature.kicker}</span>
-                <h3 className={`mt-[18px] mb-[10px] text-[1.34rem] ${isDark ? 'text-background' : 'text-foreground'}`}>{feature.title}</h3>
-                <p className={`leading-[1.78] ${isDark ? 'text-[rgba(247,241,230,0.7)]' : 'text-muted'}`}>{feature.desc}</p>
-              </article>
-            );
-          })}
+      <section id="features" className="container-shell py-16">
+        <span className="section-kicker">核心能力</span>
+        <h2 className="section-title mt-3 max-w-3xl">克制、稳定、快速，重新梳理 CDN 产品表达。</h2>
+        <p className="section-copy">以性能、安全、透明和易接入为设计中心，把旧式组件堆叠重构成更清晰的产品叙事。</p>
+        <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature) => (
+            <Card key={feature.title}>
+              <CardHeader>
+                <Badge variant="secondary" className="w-fit">{feature.kicker}</Badge>
+                <CardTitle>{feature.title}</CardTitle>
+                <CardDescription className="leading-6">{feature.desc}</CardDescription>
+              </CardHeader>
+            </Card>
+          ))}
         </div>
       </section>
 
-      {/* ── Network Section ── */}
-      <section id="network" className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto grid grid-cols-[0.86fr_1.14fr] gap-[42px] items-center mt-[34px] mb-[92px] py-[52px_0] border-y border-line max-[980px]:grid-cols-1 max-[640px]:w-[min(calc(100%-26px),1160px)]">
+      <section id="network" className="container-shell grid gap-8 py-16 lg:grid-cols-[0.86fr_1.14fr]">
         <div>
-          <span className="inline-flex w-fit text-moss text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">Delivery model</span>
-          <h2 className="font-heading mt-[15px] text-[clamp(2.35rem,5vw,5.1rem)] font-black text-foreground leading-[1.02] tracking-[-0.065em] text-balance">不堆假节点数字，只讲真实的分发路径。</h2>
-          <p className="text-muted text-[1.06rem] leading-[1.85]">公共库加速的关键不是地图上亮几个点，而是缓存、回源、刷新和访问侧路径是否足够稳定。这里用产品逻辑解释网络层，而不是制造"全球在线"的幻觉。</p>
+          <span className="section-kicker">Delivery model</span>
+          <h2 className="section-title mt-3">不堆假节点数字，只讲真实的分发路径。</h2>
+          <p className="section-copy">公共库加速的关键不是地图上亮几个点，而是缓存、回源、刷新和访问侧路径是否足够稳定。</p>
         </div>
-        <div className="grid gap-0 border-t border-line-soft">
+        <div className="grid gap-4">
           {networkFlows.map((flow, index) => (
-            <article key={flow.from} className="grid grid-cols-[52px_1fr] gap-6 items-start py-6 border-b border-line-soft max-[640px]:grid-cols-1 max-[640px]:gap-3" style={{ animation: 'revealNode 0.72s cubic-bezier(0.22, 1, 0.36, 1) both', animationDelay: `${index * 120}ms` }}>
-              <div className="text-[rgba(184,121,74,0.74)] text-[1.5rem] font-extrabold leading-none tracking-[-0.05em]">0{index + 1}</div>
-              <div className="grid gap-3">
-                <div className="grid grid-cols-[max-content_minmax(80px,1fr)_max-content] gap-4 items-center text-foreground text-[clamp(1rem,1.8vw,1.18rem)] font-extrabold max-[640px]:grid-cols-1 max-[640px]:gap-[10px]">
-                  <span>{flow.from}</span>
-                  <i className="flow-route-line max-[640px]:w-full" />
-                  <span>{flow.to}</span>
+            <Card key={flow.from}>
+              <CardContent className="flex gap-4 p-5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-sm font-semibold text-white">0{index + 1}</span>
+                <div>
+                  <h3 className="font-semibold text-zinc-950">{flow.from} → {flow.to}</h3>
+                  <p className="mt-1 text-sm leading-6 text-zinc-600">{flow.desc}</p>
                 </div>
-                <p className="max-w-[620px] m-0 text-muted leading-[1.8]">{flow.desc}</p>
-              </div>
-            </article>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>
 
-      {/* ── Usage Section ── */}
-      <section id="usage" className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto py-[42px_0_82px] max-[640px]:w-[min(calc(100%-26px),1160px)]">
-        <div className="max-w-[780px] mb-[38px]">
-          <span className="inline-flex w-fit text-moss text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">接入指南</span>
-          <h2 className="font-heading mt-[15px] text-[clamp(2.35rem,5vw,5.1rem)] font-black text-foreground leading-[1.02] tracking-[-0.065em] text-balance">四步完成替换，不改变你的工程结构。</h2>
-        </div>
-        <div className="grid grid-cols-4 border-y border-line max-[980px]:grid-cols-2 max-[640px]:grid-cols-1">
+      <section id="usage" className="container-shell py-16">
+        <span className="section-kicker">接入指南</span>
+        <h2 className="section-title mt-3">四步完成替换，不改变你的工程结构。</h2>
+        <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, index) => (
-            <article key={step.title} className="flex flex-col min-h-[282px] p-[28px_24px] border-r border-line-soft last:border-r-0 max-[980px]:border-b max-[980px]:border-r-0 [&:nth-child(2)]:max-[980px]:border-r-0 [&:nth-child(-n+2)]:max-[980px]:border-b last:max-[980px]:border-b-0 max-[640px]:border-b max-[640px]:border-r-0 last:max-[640px]:border-b-0">
-              <span className="text-[rgba(184,121,74,0.78)] text-[2.7rem] font-extrabold tracking-[-0.08em]">{String(index + 1).padStart(2, '0')}</span>
-              <h3 className="mt-[18px] mb-[10px] text-foreground text-[1.34rem]">{step.title}</h3>
-              <code className="mt-auto overflow-wrap-anywhere pt-[14px] border-t border-line-soft text-ink-soft font-mono text-[0.84rem] leading-[1.68] block">{step.code}</code>
-            </article>
+            <Card key={step.title}>
+              <CardHeader>
+                <Badge variant="outline" className="w-fit">{String(index + 1).padStart(2, '0')}</Badge>
+                <CardTitle>{step.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <code className="block break-all rounded-xl bg-zinc-950 p-3 text-xs leading-5 text-zinc-100">{step.code}</code>
+              </CardContent>
+            </Card>
           ))}
         </div>
-        <div className="grid grid-cols-3 gap-px mt-6 bg-line-soft max-[980px]:grid-cols-1">
+        <div className="mt-5 grid gap-5 md:grid-cols-3">
           {recipes.map((recipe) => (
-            <article key={recipe.name} className="p-[26px_24px] bg-[rgba(247,241,230,0.82)]">
-              <h3 className="mt-[18px] mb-[10px] text-foreground text-[1.34rem]">{recipe.name}</h3>
-              <p className="text-muted leading-[1.78]">源地址：<code className="mt-auto overflow-wrap-anywhere pt-[14px] border-t border-line-soft text-ink-soft font-mono text-[0.84rem] leading-[1.68] block">{recipe.source}</code></p>
-              <p className="text-muted leading-[1.78]">替换为：<code className="mt-auto overflow-wrap-anywhere pt-[14px] border-t border-line-soft text-ink-soft font-mono text-[0.84rem] leading-[1.68] block">{recipe.target}</code></p>
-            </article>
+            <Card key={recipe.name}>
+              <CardHeader>
+                <CardTitle>{recipe.name}</CardTitle>
+                <CardDescription>源地址：<code>{recipe.source}</code></CardDescription>
+                <CardDescription>替换为：<code>{recipe.target}</code></CardDescription>
+              </CardHeader>
+            </Card>
           ))}
         </div>
       </section>
 
-      {/* ── Partners Section ── */}
-      <section className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto flex items-center justify-between gap-[34px] py-11 mb-[88px] border-y border-line max-[980px]:flex-col max-[980px]:items-start max-[640px]:w-[min(calc(100%-26px),1160px)]">
-        <div>
-          <span className="inline-flex w-fit text-moss text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">Trusted ecosystem</span>
-          <h2 className="font-heading mt-[15px] text-[clamp(2.35rem,5vw,5.1rem)] font-black text-foreground leading-[1.02] tracking-[-0.065em] text-balance">与开放生态共同运行</h2>
-        </div>
-        <div className="flex flex-wrap gap-[22px] items-center justify-end">
-          <Image src="/img/cloudflare.svg" width={180} height={58} alt="Cloudflare CDN 基础设施" className="w-auto max-h-12 object-contain [filter:grayscale(1)_contrast(0.88)_opacity(0.72)] transition-[filter,transform] duration-300 hover:[filter:grayscale(0.25)_contrast(0.94)_opacity(0.9)] hover:-translate-y-0.5" />
-          <Image src="/img/fido-s.webp" width={180} height={58} alt="云驰互联合作生态" className="w-auto max-h-12 object-contain [filter:grayscale(1)_contrast(0.88)_opacity(0.72)] transition-[filter,transform] duration-300 hover:[filter:grayscale(0.25)_contrast(0.94)_opacity(0.9)] hover:-translate-y-0.5" />
-        </div>
+      <section className="container-shell py-16">
+        <Card className="p-6">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <span className="section-kicker">Trusted ecosystem</span>
+              <h2 className="section-title mt-3">与开放生态共同运行</h2>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {partners.map((partner) => (
+              <div key={partner.name} className="group rounded-2xl border border-zinc-200 bg-zinc-50 p-4 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
+                <div className="flex h-14 items-center justify-center rounded-xl bg-white px-4 ring-1 ring-zinc-200">
+                  <Image src={partner.image} width={150} height={48} alt={partner.name} className="h-auto max-h-8 w-auto object-contain opacity-75 grayscale transition group-hover:opacity-100 group-hover:grayscale-0" />
+                </div>
+                <strong className="mt-4 block text-sm font-semibold text-zinc-950">{partner.name}</strong>
+                <span className="mt-1 block text-xs text-zinc-500">{partner.desc}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
       </section>
 
-      {/* ── FAQ Section ── */}
-      <section id="faq" className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto py-[42px_0_82px] max-[640px]:w-[min(calc(100%-26px),1160px)]" aria-labelledby="heading-faq">
-        <div className="max-w-[610px] mb-[38px]">
-          <span className="inline-flex w-fit text-moss text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">FAQ</span>
-          <h2 id="heading-faq" className="font-heading mt-[15px] text-[clamp(2.35rem,5vw,5.1rem)] font-black text-foreground leading-[1.02] tracking-[-0.065em] text-balance">常见问题</h2>
-        </div>
-        <div className="grid grid-cols-2 gap-x-[42px] border-t border-line max-[980px]:grid-cols-1">
+      <section id="faq" className="container-shell py-16" aria-labelledby="heading-faq">
+        <span className="section-kicker">FAQ</span>
+        <h2 id="heading-faq" className="section-title mt-3">常见问题</h2>
+        <div className="mt-8 grid gap-3">
           {faqs.map((faq) => (
-            <details key={faq.q} className="faq-item overflow-hidden py-6 border-b border-line-soft transition-[background,padding] duration-300">
-              <summary className="flex items-center justify-between gap-[18px] cursor-pointer text-foreground text-[1.08rem] font-extrabold list-none [&::-webkit-details-marker]:hidden [&::after]:content-['+'] [&::after]:flex-none [&::after]:text-moss [&::after]:font-bold [&::after]:transition-[transform,color] [&::after]:duration-300 [&::after]:ease-[cubic-bezier(0.22,1,0.36,1)]">{faq.q}</summary>
-              <p className="m-0 pt-[14px] pr-[26px] text-muted leading-[1.78] -translate-y-1.5 opacity-0 transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]">{faq.a}</p>
+            <details key={faq.q} className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+              <summary className="cursor-pointer list-none font-semibold text-zinc-950">{faq.q}</summary>
+              <p className="mt-3 text-sm leading-6 text-zinc-600">{faq.a}</p>
             </details>
           ))}
         </div>
       </section>
 
-      {/* ── Feedback Section ── */}
-      <section id="feedback" className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto py-[42px_0_82px] max-[640px]:w-[min(calc(100%-26px),1160px)]" aria-labelledby="heading-feedback">
-        <div className="feedback-card-bg grid grid-cols-[minmax(240px,0.72fr)_minmax(0,1.28fr)] gap-[54px] items-center relative overflow-hidden p-[clamp(30px,5vw,58px)] border-y border-line max-[980px]:grid-cols-1 max-[980px]:gap-7 max-[640px]:p-[28px_18px]">
-          {/* Decorative inner borders */}
-          <div className="absolute inset-y-[18px] inset-x-0 pointer-events-none border-t border-b border-[rgba(36,32,23,0.07)]" />
-          {/* REPORT watermark */}
-          <div className="absolute right-[clamp(22px,4vw,54px)] top-[clamp(20px,3.8vw,46px)] text-[rgba(36,32,23,0.06)] text-[clamp(3.2rem,9vw,7.4rem)] font-black leading-none tracking-[-0.08em] pointer-events-none max-[640px]:hidden">REPORT</div>
-
-          <div className="relative grid place-items-center min-h-[330px] isolate max-[980px]:min-h-[240px]" aria-hidden="true">
-            <div className="feedback-visual-blob" />
-            <div className="absolute w-[70%] h-px bottom-12 bg-gradient-to-r from-transparent via-[rgba(36,32,23,0.18)] to-transparent" />
-            <Image src="/star/images/iocdn_feedback.png" width={280} height={220} alt="" className="relative z-[1] justify-self-center max-w-[min(280px,88%)] [filter:saturate(0.68)_contrast(0.94)_drop-shadow(0_26px_36px_rgba(49,41,26,0.14))]" />
-          </div>
-
-          <div className="relative z-[2] max-w-[720px]">
-            <span className="inline-flex w-fit text-moss text-[0.74rem] font-extrabold tracking-[0.16em] uppercase">Feedback loop</span>
-            <h2 id="heading-feedback" className="font-heading mt-[15px] text-[clamp(2.35rem,5vw,5.1rem)] font-black text-foreground leading-[1.02] tracking-[-0.065em] text-balance">发现异常？请直接告诉我们。</h2>
-            <p className="text-muted text-[1.06rem] leading-[1.85]">资源加载异常、访问变慢、证书错误、安全风险或滥用内容，都可以通过邮件、Issue 或群聊反馈。我们更重视清晰、具体、可复现的描述。</p>
-            <div className="grid grid-cols-2 gap-3 mt-[30px] max-[640px]:grid-cols-1">
-              <a className="relative grid gap-1 min-h-[86px] p-[18px_20px] border border-line text-foreground bg-[rgba(247,241,230,0.42)] transition-[transform,background,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:border-[rgba(36,32,23,0.3)] hover:bg-[rgba(255,252,245,0.68)] [&::after]:content-['↗'] [&::after]:absolute [&::after]:right-[18px] [&::after]:top-4 [&::after]:text-[rgba(36,32,23,0.36)] [&::after]:text-base [&::after]:transition-[transform,color] [&::after]:duration-300 hover:[&::after]:text-current hover:[&::after]:translate-x-[2px] hover:[&::after]:-translate-y-[2px] bg-foreground border-foreground text-primary-foreground max-[640px]:min-h-[78px]" href="mailto:help@wuxit.cn">
-                <span className="text-[rgba(250,245,236,0.62)] text-[0.76rem] font-extrabold tracking-[0.12em] uppercase">发送邮件</span>
-                <strong className="self-end pr-7 text-[1.02rem] leading-[1.35] overflow-wrap-anywhere">help@wuxit.cn</strong>
-              </a>
-              <a className="relative grid gap-1 min-h-[86px] p-[18px_20px] border border-line text-foreground bg-[rgba(247,241,230,0.42)] transition-[transform,background,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:border-[rgba(36,32,23,0.3)] hover:bg-[rgba(255,252,245,0.68)] [&::after]:content-['↗'] [&::after]:absolute [&::after]:right-[18px] [&::after]:top-4 [&::after]:text-[rgba(36,32,23,0.36)] [&::after]:text-base [&::after]:transition-[transform,color] [&::after]:duration-300 hover:[&::after]:text-current hover:[&::after]:translate-x-[2px] hover:[&::after]:-translate-y-[2px] bg-[rgba(255,252,245,0.5)] max-[640px]:min-h-[78px]" href="https://github.com/chizw/StarCDN/issues" target="_blank" rel="noreferrer">
-                <span className="text-[rgba(112,108,93,0.86)] text-[0.76rem] font-extrabold tracking-[0.12em] uppercase">提交 Issue</span>
-                <strong className="self-end pr-7 text-[1.02rem] leading-[1.35] overflow-wrap-anywhere">GitHub Repository</strong>
-              </a>
-            </div>
-            <a className="feedback-link-underline inline-flex items-center w-fit mt-2 text-foreground font-extrabold" href="https://qm.qq.com/q/sugzhf6lQO" target="_blank" rel="noreferrer">加入 QQ 群沟通</a>
-            <div className="grid grid-cols-2 gap-[14px] mt-7 max-[640px]:grid-cols-1">
-              <div className="relative min-h-[118px] overflow-hidden p-[18px_20px_20px] border border-[rgba(36,32,23,0.09)] rounded-[22px] bg-[rgba(255,252,245,0.46)] shadow-[0_16px_42px_rgba(49,41,26,0.06)]">
-                <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_18%_16%,rgba(111,125,82,0.14),transparent_38%),linear-gradient(135deg,rgba(255,252,245,0.34),transparent_62%)]" />
-                <div className="absolute right-[18px] top-[18px] w-[9px] h-[9px] rounded-full bg-brass shadow-[0_0_0_6px_rgba(178,147,84,0.12)]" />
-                <strong className="relative block text-foreground text-[0.96rem]">建议包含</strong>
-                <p className="relative mt-2 text-muted text-[0.94rem] leading-[1.7]">资源地址、报错信息、访问时间和截图。</p>
-              </div>
-              <div className="relative min-h-[118px] overflow-hidden p-[18px_20px_20px] border border-[rgba(36,32,23,0.09)] rounded-[22px] bg-[rgba(255,252,245,0.46)] shadow-[0_16px_42px_rgba(49,41,26,0.06)]">
-                <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_18%_16%,rgba(111,125,82,0.14),transparent_38%),linear-gradient(135deg,rgba(255,252,245,0.34),transparent_62%)]" />
-                <div className="absolute right-[18px] top-[18px] w-[9px] h-[9px] rounded-full bg-brass shadow-[0_0_0_6px_rgba(178,147,84,0.12)]" />
-                <strong className="relative block text-foreground text-[0.96rem]">响应方式</strong>
-                <p className="relative mt-2 text-muted text-[0.94rem] leading-[1.7]">优先邮件与 Issue，便于追踪和复现。</p>
+      <section id="feedback" className="container-shell py-16" aria-labelledby="heading-feedback">
+        <Card className="grid overflow-hidden md:grid-cols-[0.8fr_1.2fr]">
+          <div className="flex items-center justify-center bg-zinc-950 p-8 text-white">
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/20">
+              <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+              <Image src="/star/images/iocdn_feedback.png" width={280} height={220} alt="反馈通道示意" className="relative z-10 max-h-56 w-auto object-contain opacity-85 grayscale contrast-125" />
+              <div className="mt-5 grid grid-cols-2 gap-2 text-xs text-zinc-300">
+                {['URL', 'Error', 'Time', 'Screenshot'].map((item) => (
+                  <span key={item} className="rounded-full bg-white/[0.06] px-3 py-1.5 text-center ring-1 ring-white/10">{item}</span>
+                ))}
               </div>
             </div>
           </div>
-        </div>
+          <div className="p-8 md:p-10">
+            <span className="section-kicker">Feedback loop</span>
+            <h2 id="heading-feedback" className="section-title mt-3">发现异常？请直接告诉我们。</h2>
+            <p className="section-copy">资源加载异常、访问变慢、证书错误、安全风险或滥用内容，都可以通过邮件、Issue 或群聊反馈。</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a className="rounded-xl bg-zinc-950 px-5 py-3 text-sm font-medium text-white" href="mailto:help@wuxit.cn">发送邮件 · help@wuxit.cn</a>
+              <a className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-medium text-zinc-950" href="https://github.com/chizw/StarCDN/issues" target="_blank" rel="noreferrer">提交 Issue</a>
+              <a className="rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-medium text-zinc-950" href="https://qm.qq.com/q/sugzhf6lQO" target="_blank" rel="noreferrer">加入 QQ 群</a>
+            </div>
+          </div>
+        </Card>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="relative z-[2] w-[min(1160px,calc(100%-44px))] mx-auto flex flex-wrap items-center justify-between gap-[18px] border-t border-line py-[34px_0_44px] text-[rgba(23,23,19,0.62)] max-[640px]:w-[min(calc(100%-26px),1160px)]">
-        <div className="text-foreground text-[1.28rem] font-black">Star⭐CDN</div>
-        <div className="flex flex-wrap gap-[18px] font-bold">
-          <a href="#features" className="nav-link-underline relative">产品能力</a>
-          <a href="#usage" className="nav-link-underline relative">接入指南</a>
-          <a href="https://fastjs.qixz.cn" target="_blank" rel="noreferrer">信网智能 CDN</a>
-          <a href="https://github.com/chizw/StarCDN" target="_blank" rel="noreferrer">GitHub 项目</a>
+      <footer className="container-shell border-t border-zinc-200 py-8 text-sm text-zinc-500">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div className="font-semibold text-zinc-950">Star⭐CDN</div>
+          <div className="flex flex-wrap gap-4">
+            <a href="#features">产品能力</a>
+            <a href="#usage">接入指南</a>
+            <a href="https://fastjs.qixz.cn" target="_blank" rel="noreferrer">信网智能 CDN</a>
+            <a href="https://github.com/chizw/StarCDN" target="_blank" rel="noreferrer">GitHub 项目</a>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-[8px_16px] w-full m-0 text-[0.9rem]">
+        <div className="mt-4 flex flex-col justify-between gap-2 md:flex-row">
           <span>Copyright © 2024-2026 Star⭐CDN · 信网 · All Rights Reserved</span>
           <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">ICP备案号待补充</a>
         </div>
