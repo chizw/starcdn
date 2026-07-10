@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { Button } from '@/app/components/ui/button';
 
 function isTokenValid(): boolean {
   try {
@@ -40,31 +41,31 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   if (!authed) {
     return (
-      <div className="admin-page">
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <div className="loading-spinner" />
+      <div className="page-bg-admin">
+        <div className="flex justify-center items-center h-screen">
+          <div className="inline-block w-[18px] h-[18px] border-2 border-line border-t-moss rounded-full [animation:spin_0.8s_linear_infinite]" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="admin-page">
-      <nav className="admin-nav">
-        <a href="/admin" className="admin-nav-brand">
-          <Image src="/favicon.ico" alt="StarCDN" width={32} height={32} />
-          <span>管理后台</span>
+    <div className="page-bg-admin [&>*]:relative [&>*]:z-[1]">
+      <nav className="flex items-center justify-between gap-6 px-9 py-4 border-b border-line bg-[rgba(247,241,230,0.6)] backdrop-blur-[12px] max-[768px]:px-5 max-[768px]:flex-wrap">
+        <a href="/admin" className="flex items-center gap-3 no-underline">
+          <Image src="/favicon.ico" alt="StarCDN" width={32} height={32} className="[filter:saturate(0.86)_contrast(0.96)]" />
+          <span className="font-heading text-[1.1rem] font-black text-foreground tracking-[-0.02em]">管理后台</span>
         </a>
-        <div className="admin-nav-links">
-          <a href="/admin" className="admin-nav-link">仪表盘</a>
-          <a href="/admin/bans" className="admin-nav-link">封禁规则</a>
-          <a href="/admin/settings" className="admin-nav-link">设置</a>
+        <div className="flex items-center gap-1">
+          <a href="/admin" className="px-4 py-[10px] text-muted text-[0.92rem] font-bold rounded-full transition-[color,background] duration-300 hover:text-foreground hover:bg-[rgba(255,252,245,0.5)]">仪表盘</a>
+          <a href="/admin/bans" className="px-4 py-[10px] text-muted text-[0.92rem] font-bold rounded-full transition-[color,background] duration-300 hover:text-foreground hover:bg-[rgba(255,252,245,0.5)]">封禁规则</a>
+          <a href="/admin/settings" className="px-4 py-[10px] text-muted text-[0.92rem] font-bold rounded-full transition-[color,background] duration-300 hover:text-foreground hover:bg-[rgba(255,252,245,0.5)]">设置</a>
         </div>
-        <button type="button" className="admin-logout-btn" onClick={handleLogout}>
+        <Button variant="outline" className="rounded-full text-ink-soft" onClick={handleLogout}>
           退出
-        </button>
+        </Button>
       </nav>
-      <main className="admin-container">
+      <main className="w-[min(1160px,calc(100%-44px))] mx-auto py-9 pb-20">
         {children}
       </main>
     </div>

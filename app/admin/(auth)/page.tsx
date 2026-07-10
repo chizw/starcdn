@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { Button } from '../../components/ui/button';
+import { Card } from '../../components/ui/card';
 
 interface StatsData {
   total_requests?: number;
@@ -85,100 +87,82 @@ export default function DashboardPage() {
 
   if (loading && !stats) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
-        <div className="loading-spinner" />
+      <div className="flex justify-center py-20">
+        <div className="inline-block w-[18px] h-[18px] border-2 border-line border-t-moss rounded-full [animation:spin_0.8s_linear_infinite]" />
       </div>
     );
   }
 
   if (error && !stats) {
     return (
-      <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--clay)' }}>
+      <div className="text-center py-20 text-clay">
         <p>{error}</p>
-        <button className="secondary-action" onClick={() => fetchStats(page)} style={{ marginTop: '16px' }}>
-          重试
-        </button>
+        <Button variant="secondary" onClick={() => fetchStats(page)} className="mt-4">重试</Button>
       </div>
     );
   }
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
-        <h1 className="admin-title" style={{ margin: 0 }}>仪表盘</h1>
-        <div className="refresh-indicator">
-          <span className="refresh-dot" />
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="font-heading text-[clamp(2rem,4vw,3rem)] font-black text-foreground tracking-[-0.065em] m-0">仪表盘</h1>
+        <div className="inline-flex items-center gap-2 text-muted text-[0.84rem] font-bold">
+          <span className="w-2 h-2 rounded-full bg-moss [animation:pulse_2s_ease-in-out_infinite]" />
           自动刷新 30s · {lastRefresh.toLocaleTimeString('zh-CN')}
         </div>
       </div>
 
-      <div className="admin-stats-grid">
-        <div className="stat-card">
-          <strong>{stats?.total_requests ? formatNumber(stats.total_requests) : '--'}</strong>
-          <span>总请求数</span>
-        </div>
-        <div className="stat-card">
-          <strong>{stats?.total_bytes_sent ? formatBytes(stats.total_bytes_sent) : '--'}</strong>
-          <span>总发送字节</span>
-        </div>
-        <div className="stat-card">
-          <strong>{stats?.unique_paths ? formatNumber(stats.unique_paths) : '--'}</strong>
-          <span>独立 URL 数</span>
-        </div>
+      <div className="grid grid-cols-3 gap-5 mb-7 max-[768px]:grid-cols-1">
+        <Card className="transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-[0_26px_80px_rgba(49,41,26,0.14)]">
+          <strong className="block text-[clamp(2rem,4vw,3rem)] font-black text-foreground tracking-[-0.07em] leading-none">{stats?.total_requests ? formatNumber(stats.total_requests) : '--'}</strong>
+          <span className="block mt-[10px] text-muted font-bold text-[0.92rem]">总请求数</span>
+        </Card>
+        <Card className="transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-[0_26px_80px_rgba(49,41,26,0.14)]">
+          <strong className="block text-[clamp(2rem,4vw,3rem)] font-black text-foreground tracking-[-0.07em] leading-none">{stats?.total_bytes_sent ? formatBytes(stats.total_bytes_sent) : '--'}</strong>
+          <span className="block mt-[10px] text-muted font-bold text-[0.92rem]">总发送字节</span>
+        </Card>
+        <Card className="transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-[0_26px_80px_rgba(49,41,26,0.14)]">
+          <strong className="block text-[clamp(2rem,4vw,3rem)] font-black text-foreground tracking-[-0.07em] leading-none">{stats?.unique_paths ? formatNumber(stats.unique_paths) : '--'}</strong>
+          <span className="block mt-[10px] text-muted font-bold text-[0.92rem]">独立 URL 数</span>
+        </Card>
       </div>
 
-      <div className="admin-card">
-        <h2>Top URL</h2>
+      <Card>
+        <h2 className="font-heading text-[1.34rem] font-extrabold text-foreground m-0 mb-5 tracking-[-0.02em]">Top URL</h2>
         {stats?.top_urls && stats.top_urls.length > 0 ? (
           <>
-            <div className="admin-table-wrapper">
-              <table className="admin-table">
+            <div className="max-h-[480px] overflow-y-auto rounded-xl [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-line [&::-webkit-scrollbar-thumb]:rounded-sm [&::-webkit-scrollbar-thumb:hover]:bg-muted">
+              <table className="w-full border-collapse text-[0.94rem] max-[768px]:text-[0.84rem]">
                 <thead>
                   <tr>
-                    <th>URL</th>
-                    <th style={{ width: '100px' }}>请求数</th>
-                    <th style={{ width: '100px' }}>流量</th>
+                    <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em]">URL</th>
+                    <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em] w-[100px]">请求数</th>
+                    <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em] w-[100px]">流量</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stats.top_urls.map((item, i) => (
-                    <tr key={i}>
-                      <td style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.84rem', wordBreak: 'break-all' }}>
-                        {item.request_path}
-                      </td>
-                      <td style={{ fontWeight: 800 }}>{formatNumber(item.request_count)}</td>
-                      <td style={{ color: 'var(--muted)' }}>{formatBytes(item.bytes_sent)}</td>
+                    <tr key={i} className="hover:bg-[rgba(255,252,245,0.38)] last:[&>td]:border-b-0">
+                      <td className="px-4 py-[14px] border-b border-line-soft text-ink-soft font-mono text-[0.84rem] [word-break:break-all]">{item.request_path}</td>
+                      <td className="px-4 py-[14px] border-b border-line-soft text-ink-soft font-extrabold">{formatNumber(item.request_count)}</td>
+                      <td className="px-4 py-[14px] border-b border-line-soft text-muted">{formatBytes(item.bytes_sent)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             {(stats.total_pages || 0) > 1 && (
-              <div className="pagination">
-                <button
-                  className="pagination-btn"
-                  onClick={handlePrevPage}
-                  disabled={page <= 1}
-                >
-                  上一页
-                </button>
-                <span className="pagination-info">
-                  第 {page} / {stats.total_pages} 页
-                </span>
-                <button
-                  className="pagination-btn"
-                  onClick={handleNextPage}
-                  disabled={page >= (stats.total_pages || 1)}
-                >
-                  下一页
-                </button>
+              <div className="flex items-center justify-center gap-4 pt-5 border-t border-line-soft mt-5">
+                <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={page <= 1} className="disabled:opacity-40 disabled:cursor-not-allowed">上一页</Button>
+                <span className="text-muted font-bold text-[0.84rem]">第 {page} / {stats.total_pages} 页</span>
+                <Button variant="outline" size="sm" onClick={handleNextPage} disabled={page >= (stats.total_pages || 1)} className="disabled:opacity-40 disabled:cursor-not-allowed">下一页</Button>
               </div>
             )}
           </>
         ) : (
-          <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '40px 0' }}>暂无数据</p>
+          <p className="text-muted text-center py-10">暂无数据</p>
         )}
-      </div>
+      </Card>
     </>
   );
 }

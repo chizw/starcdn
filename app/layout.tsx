@@ -1,8 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import './styles/home.css';
-import './styles/not-found.css';
-import './styles/waf.css';
 
 const siteUrl = 'https://fastjs.qixz.cn';
 

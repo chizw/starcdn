@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
 
 interface PasskeyItem {
   id: number;
@@ -190,25 +192,21 @@ export default function SettingsPage() {
 
   return (
     <>
-      <h1 className="admin-title" style={{ marginBottom: '32px' }}>设置</h1>
+      <h1 className="font-heading text-[clamp(2rem,4vw,3rem)] font-black text-foreground tracking-[-0.065em] m-0 mb-8">设置</h1>
 
-      <div className="admin-card" style={{ marginBottom: '28px' }}>
-        <h2>修改密码</h2>
+      <Card className="mb-7">
+        <h2 className="font-heading text-[1.34rem] font-extrabold text-foreground m-0 mb-5 tracking-[-0.02em]">修改密码</h2>
         {pwdError && (
-          <div style={{ background: 'rgba(184,121,74,0.12)', border: '1px solid rgba(184,121,74,0.3)', color: 'var(--clay)', padding: '12px 16px', borderRadius: '12px', fontSize: '0.9rem', marginBottom: '16px' }}>
-            {pwdError}
-          </div>
+          <div className="bg-[rgba(184,121,74,0.12)] border border-[rgba(184,121,74,0.3)] text-clay px-4 py-3 rounded-xl text-[0.9rem] mb-4">{pwdError}</div>
         )}
         {pwdSuccess && (
-          <div style={{ background: 'rgba(111,125,82,0.12)', border: '1px solid rgba(111,125,82,0.3)', color: 'var(--moss)', padding: '12px 16px', borderRadius: '12px', fontSize: '0.9rem', marginBottom: '16px' }}>
-            {pwdSuccess}
-          </div>
+          <div className="bg-[rgba(111,125,82,0.12)] border border-[rgba(111,125,82,0.3)] text-moss px-4 py-3 rounded-xl text-[0.9rem] mb-4">{pwdSuccess}</div>
         )}
-        <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="admin-form-group">
-            <label>当前密码</label>
+        <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5 flex-1 min-w-[160px] max-[768px]:min-w-0">
+            <label className="font-bold text-[0.84rem] text-ink-soft">当前密码</label>
             <input
-              className="admin-form-input"
+              className="py-[10px] px-[14px] border border-line rounded-xl bg-[rgba(255,252,245,0.6)] text-foreground text-[0.94rem] transition-[border-color,box-shadow] focus:outline-none focus:border-moss focus:shadow-[0_0_0_3px_rgba(111,125,82,0.15)]"
               type="password"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
@@ -216,10 +214,10 @@ export default function SettingsPage() {
               autoComplete="current-password"
             />
           </div>
-          <div className="admin-form-group">
-            <label>新密码</label>
+          <div className="flex flex-col gap-1.5 flex-1 min-w-[160px] max-[768px]:min-w-0">
+            <label className="font-bold text-[0.84rem] text-ink-soft">新密码</label>
             <input
-              className="admin-form-input"
+              className="py-[10px] px-[14px] border border-line rounded-xl bg-[rgba(255,252,245,0.6)] text-foreground text-[0.94rem] transition-[border-color,box-shadow] focus:outline-none focus:border-moss focus:shadow-[0_0_0_3px_rgba(111,125,82,0.15)]"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -227,10 +225,10 @@ export default function SettingsPage() {
               autoComplete="new-password"
             />
           </div>
-          <div className="admin-form-group">
-            <label>确认新密码</label>
+          <div className="flex flex-col gap-1.5 flex-1 min-w-[160px] max-[768px]:min-w-0">
+            <label className="font-bold text-[0.84rem] text-ink-soft">确认新密码</label>
             <input
-              className="admin-form-input"
+              className="py-[10px] px-[14px] border border-line rounded-xl bg-[rgba(255,252,245,0.6)] text-foreground text-[0.94rem] transition-[border-color,box-shadow] focus:outline-none focus:border-moss focus:shadow-[0_0_0_3px_rgba(111,125,82,0.15)]"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -239,50 +237,44 @@ export default function SettingsPage() {
             />
           </div>
           <div>
-            <button type="submit" className="primary-action" disabled={pwdLoading}>
-              {pwdLoading ? '保存中...' : '修改密码'}
-            </button>
+            <Button type="submit" disabled={pwdLoading}>{pwdLoading ? '保存中...' : '修改密码'}</Button>
           </div>
         </form>
-      </div>
+      </Card>
 
-      <div className="admin-card">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <h2 style={{ margin: 0 }}>PASSKEY 管理</h2>
-          <button type="button" className="secondary-action" onClick={handleRegisterPasskey} disabled={regLoading}>
-            {regLoading ? '注册中...' : '新增 PASSKEY'}
-          </button>
+      <Card>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-heading text-[1.34rem] font-extrabold text-foreground m-0 tracking-[-0.02em]">PASSKEY 管理</h2>
+          <Button variant="secondary" onClick={handleRegisterPasskey} disabled={regLoading}>{regLoading ? '注册中...' : '新增 PASSKEY'}</Button>
         </div>
         {regError && (
-          <div style={{ background: 'rgba(184,121,74,0.12)', border: '1px solid rgba(184,121,74,0.3)', color: 'var(--clay)', padding: '12px 16px', borderRadius: '12px', fontSize: '0.9rem', marginBottom: '16px' }}>
-            {regError}
-          </div>
+          <div className="bg-[rgba(184,121,74,0.12)] border border-[rgba(184,121,74,0.3)] text-clay px-4 py-3 rounded-xl text-[0.9rem] mb-4">{regError}</div>
         )}
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
-            <div className="loading-spinner" />
+          <div className="flex justify-center py-10">
+            <div className="inline-block w-[18px] h-[18px] border-2 border-line border-t-moss rounded-full [animation:spin_0.8s_linear_infinite]" />
           </div>
         ) : error ? (
-          <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '40px 0' }}>{error}</p>
+          <p className="text-muted text-center py-10">{error}</p>
         ) : passkeys.length === 0 ? (
-          <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '40px 0' }}>暂无 PASSKEY</p>
+          <p className="text-muted text-center py-10">暂无 PASSKEY</p>
         ) : (
-          <div className="admin-table-wrapper">
-            <table className="admin-table">
+          <div className="max-h-[480px] overflow-y-auto rounded-xl [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-line [&::-webkit-scrollbar-thumb]:rounded-sm [&::-webkit-scrollbar-thumb:hover]:bg-muted">
+            <table className="w-full border-collapse text-[0.94rem]">
               <thead>
                 <tr>
-                  <th>编号</th>
-                  <th style={{ width: '180px' }}>操作</th>
+                  <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em]">编号</th>
+                  <th className="px-4 py-3 text-left font-extrabold text-foreground border-b border-line text-[0.84rem] uppercase tracking-[0.06em] w-[180px]">操作</th>
                 </tr>
               </thead>
               <tbody>
                 {passkeys.map((pk) => (
-                  <tr key={pk.id}>
-                    <td>PASSKEY #{pk.id + 1}</td>
-                    <td>
-                      <button type="button" className="danger-action" onClick={() => handleDeletePasskey(pk.id)}>
+                  <tr key={pk.id} className="hover:bg-[rgba(255,252,245,0.38)] last:[&>td]:border-b-0">
+                    <td className="px-4 py-[14px] border-b border-line-soft text-ink-soft">PASSKEY #{pk.id + 1}</td>
+                    <td className="px-4 py-[14px] border-b border-line-soft">
+                      <Button variant="outline" size="sm" className="border-[rgba(184,121,74,0.4)] bg-[rgba(184,121,74,0.1)] text-clay hover:bg-[rgba(184,121,74,0.22)]" onClick={() => handleDeletePasskey(pk.id)}>
                         删除
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -290,7 +282,7 @@ export default function SettingsPage() {
             </table>
           </div>
         )}
-      </div>
+      </Card>
     </>
   );
 }

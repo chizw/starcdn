@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import '../../styles/admin.css';
 
 export const metadata: Metadata = {
   title: 'StarCDN Admin - 登录',

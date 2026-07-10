@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import '../../styles/admin.css';
 import { AdminShell } from './admin-shell';
 
 export const metadata: Metadata = {

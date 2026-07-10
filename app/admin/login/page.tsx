@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Button } from '../../components/ui/button';
+import { Card } from '../../components/ui/card';
 
 function base64UrlToArrayBuffer(base64url: string): ArrayBuffer {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
@@ -119,31 +121,31 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <h1>Star<span>CDN</span> Admin</h1>
-        <p className="login-subtitle">管理后台登录</p>
+    <div className="login-bg">
+      <Card className="relative z-[1] w-[min(420px,92vw)] rounded-[var(--radius-xl)]! px-8 py-10 shadow-[0_26px_80px_rgba(49,41,26,0.14)]">
+        <h1 className="font-heading text-[1.8rem] font-black text-foreground text-center m-0 mb-2 tracking-[-0.04em]">Star<span className="text-clay">CDN</span> Admin</h1>
+        <p className="text-center text-muted text-[0.94rem] m-0 mb-7">管理后台登录</p>
 
-        <div className="login-tabs">
+        <div className="flex border-b border-line-soft mb-6">
           <button
-            className={`login-tab ${activeTab === 'password' ? 'active' : ''}`}
+            className={`flex-1 py-[10px] text-center bg-transparent border-none border-b-2 ${activeTab === 'password' ? 'text-moss border-b-moss' : 'text-muted border-b-transparent'} font-bold text-[0.92rem] cursor-pointer transition-[color,border-color] duration-300`}
             onClick={() => setActiveTab('password')}
           >
             密码登录
           </button>
           <button
-            className={`login-tab ${activeTab === 'passkey' ? 'active' : ''}`}
+            className={`flex-1 py-[10px] text-center bg-transparent border-none border-b-2 ${activeTab === 'passkey' ? 'text-moss border-b-moss' : 'text-muted border-b-transparent'} font-bold text-[0.92rem] cursor-pointer transition-[color,border-color] duration-300`}
             onClick={() => setActiveTab('passkey')}
           >
             PASSKEY 登录
           </button>
         </div>
 
-        <div className={`login-error ${error ? 'visible' : ''}`}>{error}</div>
+        <div className={`bg-[rgba(184,121,74,0.12)] border border-[rgba(184,121,74,0.3)] text-clay px-4 py-3 rounded-xl text-[0.9rem] ${error ? 'block' : 'hidden'}`}>{error}</div>
 
-        <form className={`login-form ${activeTab === 'password' ? 'active' : ''}`} onSubmit={handlePasswordLogin}>
+        <form className={`flex flex-col gap-4 ${activeTab === 'password' ? 'flex' : 'hidden'}`} onSubmit={handlePasswordLogin}>
           <input
-            className="login-input"
+            className="py-3 px-4 border border-line rounded-xl bg-[rgba(255,252,245,0.6)] text-foreground text-base focus:outline-none focus:border-moss focus:shadow-[0_0_0_3px_rgba(111,125,82,0.15)]"
             type="text"
             placeholder="用户名"
             value={username}
@@ -152,7 +154,7 @@ export default function LoginPage() {
             autoComplete="username"
           />
           <input
-            className="login-input"
+            className="py-3 px-4 border border-line rounded-xl bg-[rgba(255,252,245,0.6)] text-foreground text-base focus:outline-none focus:border-moss focus:shadow-[0_0_0_3px_rgba(111,125,82,0.15)]"
             type="password"
             placeholder="密码"
             value={password}
@@ -160,23 +162,13 @@ export default function LoginPage() {
             required
             autoComplete="current-password"
           />
-          <button type="submit" className="primary-action" disabled={loading} style={{ width: '100%' }}>
-            {loading ? '登录中...' : '登录'}
-          </button>
+          <Button type="submit" disabled={loading} className="w-full">{loading ? '登录中...' : '登录'}</Button>
         </form>
 
-        <div className={`login-form ${activeTab === 'passkey' ? 'active' : ''}`}>
-          <button
-            type="button"
-            className="primary-action"
-            onClick={handlePasskeyLogin}
-            disabled={loading}
-            style={{ width: '100%', background: '#242723' }}
-          >
-            {loading ? '验证中...' : '使用 PASSKEY 登录'}
-          </button>
+        <div className={`flex flex-col gap-4 ${activeTab === 'passkey' ? 'flex' : 'hidden'}`}>
+          <Button type="button" onClick={handlePasskeyLogin} disabled={loading} className="w-full bg-[#242723]!">{loading ? '验证中...' : '使用 PASSKEY 登录'}</Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
