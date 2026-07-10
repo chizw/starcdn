@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -25,9 +26,14 @@ export default function WafPage() {
     <main className="page-shell overflow-hidden">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(239,68,68,0.10),transparent_26rem),linear-gradient(to_bottom,#fff,#fafafa)]" />
       <header className="container-shell flex items-center justify-between border-b border-zinc-200/70 py-4">
-        <Link className="flex items-center gap-2 text-lg font-semibold tracking-tight text-zinc-950" href="/" aria-label="StarCDN 首页">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-950 text-sm font-semibold text-white">S</span>
-          <span>StarCDN</span>
+        <Link className="flex items-center gap-3" href="/" aria-label="StarCDN 首页">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <Image src="/favicon.ico" alt="StarCDN" width={24} height={24} />
+          </span>
+          <div className="leading-tight">
+            <strong className="block text-sm font-semibold text-zinc-950">StarCDN</strong>
+            <span className="text-xs text-zinc-500">fastjs.qixz.cn</span>
+          </div>
         </Link>
         <Badge variant="destructive">Security Interception</Badge>
       </header>

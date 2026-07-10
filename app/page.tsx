@@ -106,9 +106,14 @@ export default function Home() {
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(to_right,rgba(24,24,27,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(24,24,27,0.045)_1px,transparent_1px)] bg-[size:80px_80px] [mask-image:linear-gradient(to_bottom,black,transparent_80%)]" />
 
       <header className="container-shell sticky top-0 z-20 flex items-center justify-between border-b border-zinc-200/70 bg-zinc-50/80 py-4 backdrop-blur-xl">
-        <Link className="flex items-center gap-2 text-lg font-semibold tracking-tight text-zinc-950" href="/" aria-label="StarCDN 首页">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-950 text-sm font-semibold text-white">S</span>
-          <span>StarCDN</span>
+        <Link className="flex items-center gap-3" href="/" aria-label="StarCDN 首页">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <Image src="/favicon.ico" alt="StarCDN" width={24} height={24} />
+          </span>
+          <div className="leading-tight">
+            <strong className="block text-sm font-semibold text-zinc-950">StarCDN</strong>
+            <span className="text-xs text-zinc-500">fastjs.qixz.cn</span>
+          </div>
         </Link>
         <nav className="hidden items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 text-sm text-zinc-600 shadow-sm md:flex" aria-label="主导航">
           {navItems.map((item) => (
@@ -302,7 +307,7 @@ export default function Home() {
           <div className="flex items-center justify-center bg-zinc-950 p-8 text-white">
             <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/20">
               <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-              <Image src="/star/images/iocdn_feedback.png" width={280} height={220} alt="反馈通道示意" className="relative z-10 max-h-56 w-auto object-contain opacity-85 grayscale contrast-125" />
+              <Image src="/star/images/iocdn_feedback.png" width={280} height={220} alt="反馈通道示意" className="relative z-10 h-auto max-h-56 w-auto object-contain opacity-85 grayscale contrast-125" />
               <div className="mt-5 grid grid-cols-2 gap-2 text-xs text-zinc-300">
                 {['URL', 'Error', 'Time', 'Screenshot'].map((item) => (
                   <span key={item} className="rounded-full bg-white/[0.06] px-3 py-1.5 text-center ring-1 ring-white/10">{item}</span>

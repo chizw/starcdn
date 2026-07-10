@@ -1,13 +1,32 @@
 import type { NextConfig } from 'next';
+import { PHASE_DEVELOPMENT_SERVER } from 'next/constants';
 
-const nextConfig: NextConfig = {
-  output: 'export',
+const backendUrl = process.env.STARCDN_BACKEND_URL ?? 'http://127.0.0.1:2606';
+
+const createNextConfig = (phase: string): NextConfig => ({
+  ...(phase === PHASE_DEVELOPMENT_SERVER ? {} : { output: 'export' as const }),
   compress: true,
+  ...(phase === PHASE_DEVELOPMENT_SERVER
+    ? {
+        async rewrites() {
+          return [
+            {
+              source: '/api/:path*/',
+              destination: `${backendUrl}/api/:path*`,
+            },
+            {
+              source: '/admin/api/:path*/',
+              destination: `${backendUrl}/admin/api/:path*`,
+            },
+          ];
+        },
+      }
+    : {}),
   poweredByHeader: false,
   images: {
     unoptimized: true,
   },
   trailingSlash: true,
-};
+});
 
-export default nextConfig;
+export default createNextConfig;

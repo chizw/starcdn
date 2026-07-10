@@ -1,8 +1,9 @@
 {
   "scripts": {
-    "dev": "next dev -p 2607",
-    "dev:backend": "go run ./cmd/starcdn",
-    "dev:all": "npx concurrently -n \"NEXT,GO\" -c \"cyan,green\" \"npm run dev\" \"npm run dev:backend\"",
+    "dev": "next dev -H 0.0.0.0 -p 2607",
+    "dev:frontend": "next dev -H 0.0.0.0 -p 2607",
+    "dev:backend": "set STARCDN_ADDR=:2606&& go run ./cmd/starcdn",
+    "dev:all": "npx concurrently -k -n \"FRONTEND,BACKEND\" -c \"cyan,green\" \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
