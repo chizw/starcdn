@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const siteUrl = 'https://jscdn.wuxit.cn';
+const siteUrl = 'https://fastjs.qixz.cn';
 
 export const dynamic = 'force-static';
 

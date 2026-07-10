@@ -11,22 +11,22 @@ import (
 
 func main() {
 	cfg := server.Config{
-		Addr:       env("STARCDN_ADDR", ":2606"),
-		CacheDir:   env("STARCDN_CACHE_DIR", ".cache/starcdn"),
-		FlushToken: os.Getenv("STARCDN_FLUSH_TOKEN"),
-		PurgeToken: os.Getenv("STARCDN_PURGE_TOKEN"),
-		CacheTTL:   durationEnv("STARCDN_CACHE_TTL", 7*24*time.Hour),
-		DBPath:     env("STARCDN_DB_PATH", ".data/starcdn.db"),
-		AdminUser:  env("STARCDN_ADMIN_USER", "admin"),
-		AdminPass:  env("STARCDN_ADMIN_PASS", "admin123"),
-		JWTSecret:  env("STARCDN_JWT_SECRET", "starcdn-default-jwt-secret-2025"),
-		StaticDir:  os.Getenv("STARCDN_STATIC_DIR"),
+		Addr:      env("STARCDN_ADDR", ":2606"),
+		CacheDir:  env("STARCDN_CACHE_DIR", ".cache/starcdn"),
+		CacheTTL:  durationEnv("STARCDN_CACHE_TTL", 10*time.Minute),
+		DBPath:    env("STARCDN_DB_PATH", ".data/starcdn.db"),
+		AdminUser: env("STARCDN_ADMIN_USER", "admin"),
+		AdminPass: env("STARCDN_ADMIN_PASS", "admin123"),
+		JWTSecret: env("STARCDN_JWT_SECRET", "starcdn-default-jwt-secret-2025"),
+		StaticDir: os.Getenv("STARCDN_STATIC_DIR"),
 	}
 
 	app, err := server.New(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
+	app.Start()
+	defer app.Shutdown()
 
 	log.Printf("StarCDN listening on %s", cfg.Addr)
 	log.Fatal(http.ListenAndServe(cfg.Addr, app))

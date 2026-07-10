@@ -18,7 +18,7 @@
     if (countdownElement) countdownElement.textContent = String(seconds);
     if (seconds <= 0) {
       window.clearInterval(timer);
-      window.location.href = 'https://jscdn.wuxit.cn';
+      window.location.href = 'https://fastjs.qixz.cn';
     }
   }, 1000);
 })();

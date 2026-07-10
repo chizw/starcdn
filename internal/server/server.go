@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/md5"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -14,6 +15,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -26,16 +28,14 @@ import (
 )
 
 type Config struct {
-	Addr       string
-	CacheDir   string
-	FlushToken string
-	PurgeToken string
-	CacheTTL   time.Duration
-	DBPath     string
-	AdminUser  string
-	AdminPass  string
-	JWTSecret  string
-	StaticDir  string
+	Addr      string
+	CacheDir  string
+	CacheTTL  time.Duration
+	DBPath    string
+	AdminUser string
+	AdminPass string
+	JWTSecret string
+	StaticDir string
 }
 
 type Server struct {
@@ -48,13 +48,30 @@ type Server struct {
 	adminHdlr    *admin.Handler
 	staticDir    string
 	staticServer http.Handler
+	cleanupStop  chan struct{}
+	cleanupDone  chan struct{}
 }
 
 type ProxyRoute struct {
-	Name         string
-	Prefix       string
-	UpstreamBase string
-	CacheTTL     time.Duration
+	Name       string
+	Prefix     string
+	Upstreams  []Upstream
+	CacheTTL   time.Duration
+	StrictRel  bool
+	URLBuilder func(rel string, r *http.Request) []ResolvedURL
+}
+
+type Upstream struct {
+	Name string
+	Base string
+}
+
+// ResolvedURL is the result of a route's URLBuilder.
+// Unlike Upstream+buildTargetURL, the target URL is fully resolved by the builder
+// and does not need the rel/query to be appended.
+type ResolvedURL struct {
+	TargetURL    string
+	UpstreamName string
 }
 
 type cacheMeta struct {
@@ -68,8 +85,9 @@ func New(cfg Config) (*Server, error) {
 	if cfg.CacheDir == "" {
 		cfg.CacheDir = ".cache/starcdn"
 	}
+	// 本地缓存默认保留 10 分钟：吸收短时流量峰值 + 给上游 CDN 留出缓存窗口
 	if cfg.CacheTTL <= 0 {
-		cfg.CacheTTL = 7 * 24 * time.Hour
+		cfg.CacheTTL = 10 * time.Minute
 	}
 	if err := os.MkdirAll(cfg.CacheDir, 0755); err != nil {
 		return nil, err
@@ -110,11 +128,17 @@ func New(cfg Config) (*Server, error) {
 	return &Server{
 		cfg: cfg,
 		routes: []ProxyRoute{
-			{Name: "jsdelivr-gh", Prefix: "/gh/", UpstreamBase: "https://cdn.jsdelivr.net/gh/", CacheTTL: cfg.CacheTTL},
-			{Name: "jsdelivr-wp", Prefix: "/wp/", UpstreamBase: "https://cdn.jsdelivr.net/wp/", CacheTTL: cfg.CacheTTL},
-			{Name: "npm", Prefix: "/npm/", UpstreamBase: "https://cdn.jsdelivr.net/npm/", CacheTTL: cfg.CacheTTL},
-			{Name: "cdnjs", Prefix: "/ajax/libs/", UpstreamBase: "https://cdnjs.cloudflare.com/ajax/libs/", CacheTTL: cfg.CacheTTL},
-			{Name: "gravatar", Prefix: "/avatar/", UpstreamBase: "https://avatar.eo.wuxit.cn/avatar/", CacheTTL: cfg.CacheTTL},
+			{Name: "gh", Prefix: "/gh/", Upstreams: []Upstream{
+				{Name: "jsdelivr", Base: "https://cdn.jsdelivr.net/gh/"},
+			}, CacheTTL: cfg.CacheTTL},
+			{Name: "npm", Prefix: "/npm/", Upstreams: []Upstream{
+				{Name: "unpkg", Base: "https://unpkg.com/"},
+				{Name: "jsdelivr", Base: "https://cdn.jsdelivr.net/npm/"},
+			}, CacheTTL: cfg.CacheTTL},
+			{Name: "cdnjs", Prefix: "/ajax/libs/", Upstreams: []Upstream{
+				{Name: "cdnjs", Base: "https://cdnjs.cloudflare.com/ajax/libs/"},
+			}, CacheTTL: cfg.CacheTTL},
+			{Name: "avatar", Prefix: "/avatar/", CacheTTL: cfg.CacheTTL, StrictRel: true, URLBuilder: avatarURLBuilder},
 		},
 		client: &http.Client{
 			Timeout: 30 * time.Second,
@@ -133,14 +157,37 @@ func New(cfg Config) (*Server, error) {
 		authSvc:    authSvc,
 		adminHdlr:  adminHdlr,
 		staticDir:  cfg.StaticDir,
+		cleanupStop: make(chan struct{}),
+		cleanupDone: make(chan struct{}),
 	}, nil
+}
+
+// Start 启动后台过期缓存清理协程
+func (s *Server) Start() {
+	go s.runCacheCleanup(s.cfg.CacheTTL)
+}
+
+// Shutdown 停止后台清理协程
+func (s *Server) Shutdown() {
+	if s.cleanupStop == nil {
+		return
+	}
+	select {
+	case <-s.cleanupStop:
+		return
+	default:
+		close(s.cleanupStop)
+	}
+	if s.cleanupDone != nil {
+		<-s.cleanupDone
+	}
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.setSecurityHeaders(w)
 
 	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
+		s.handleOptions(w, r)
 		return
 	}
 
@@ -149,7 +196,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.HasPrefix(r.URL.Path, "/admin/api/") || r.URL.Path == "/admin/api/flush" {
+	if strings.HasPrefix(r.URL.Path, "/admin/api/") {
 		if s.adminHdlr != nil {
 			s.adminHdlr.ServeHTTP(w, r)
 		} else {
@@ -270,7 +317,7 @@ func (s *Server) handlePublicStats(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	order := []string{"Jsdelivr", "Gravatar", "Cdnjs"}
+	order := []string{"Unpkg", "Jsdelivr", "Gravatar", "Cdnjs"}
 	result := make([]*db.ServiceStats, 0, len(order))
 	for _, name := range order {
 		if s, ok := merged[name]; ok {
@@ -302,90 +349,114 @@ func (s *Server) handleProxy(w http.ResponseWriter, r *http.Request, route Proxy
 		return
 	}
 
-	targetURL, key, err := s.buildTargetURL(route, r)
+	rel, err := s.extractRelPath(route, r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	flush := r.URL.Query().Get("flush") == "1"
-	if flush && s.cfg.FlushToken != "" && r.URL.Query().Get("flush_token") != s.cfg.FlushToken {
-		http.Error(w, "invalid flush token", http.StatusForbidden)
+	targets, err := s.resolveTargets(route, rel, r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if flush && s.cfg.FlushToken == "" && !isPrivateClient(r) {
-		http.Error(w, "flush token required", http.StatusForbidden)
-		return
-	}
-
-	purge := r.URL.Query().Get("purge") == "1"
-	if purge && s.cfg.PurgeToken != "" && r.URL.Query().Get("purge_token") != s.cfg.PurgeToken {
-		http.Error(w, "invalid purge token", http.StatusForbidden)
-		return
-	}
-	if purge && s.cfg.PurgeToken == "" && !isPrivateClient(r) {
-		http.Error(w, "purge token required", http.StatusForbidden)
+	if len(targets) == 0 {
+		http.Error(w, "no upstream available", http.StatusBadGateway)
 		return
 	}
 
-	if purge {
-		s.handlePurge(route, r, key, targetURL)
-		_ = s.deleteCache(key)
-		w.Header().Set("X-StarCDN-Cache", "PURGED")
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"message":"purge request sent","path":"` + r.URL.Path + `"}`))
-		return
+	for _, t := range targets {
+		if s.serveCache(w, r, t.Key) {
+			return
+		}
+
+		if s.fetchAndCacheWithStats(w, r, t.URL, t.Key, route.CacheTTL, t.UpstreamName) {
+			return
+		}
 	}
 
-	if flush {
-		_ = s.deleteCache(key)
-	} else if s.serveCache(w, r, key) {
-		return
-	}
-
-	s.fetchAndCacheWithStats(w, r, targetURL, key, route.CacheTTL)
+	http.Error(w, "all upstreams failed", http.StatusBadGateway)
 }
 
-func (s *Server) buildTargetURL(route ProxyRoute, r *http.Request) (string, string, error) {
+type proxyTarget struct {
+	URL          string
+	Key          string
+	UpstreamName string
+}
+
+func (s *Server) resolveTargets(route ProxyRoute, rel string, r *http.Request) ([]proxyTarget, error) {
+	if route.URLBuilder != nil {
+		resolved := route.URLBuilder(rel, r)
+		if len(resolved) == 0 {
+			return nil, errors.New("invalid avatar path")
+		}
+		out := make([]proxyTarget, 0, len(resolved))
+		for _, ru := range resolved {
+			out = append(out, proxyTarget{
+				URL:          ru.TargetURL,
+				Key:          cacheKey(ru.UpstreamName, ru.TargetURL),
+				UpstreamName: ru.UpstreamName,
+			})
+		}
+		return out, nil
+	}
+
+	out := make([]proxyTarget, 0, len(route.Upstreams))
+	for _, up := range route.Upstreams {
+		targetURL, key, perr := s.buildTargetURL(rel, up, r)
+		if perr != nil {
+			continue
+		}
+		out = append(out, proxyTarget{URL: targetURL, Key: key, UpstreamName: up.Name})
+	}
+	return out, nil
+}
+
+func (s *Server) extractRelPath(route ProxyRoute, r *http.Request) (string, error) {
 	rawPath, err := url.PathUnescape(r.URL.EscapedPath())
 	if err != nil {
-		return "", "", errors.New("invalid path")
+		return "", errors.New("invalid path")
 	}
 	if !strings.HasPrefix(rawPath, route.Prefix) {
-		return "", "", errors.New("invalid route")
+		return "", errors.New("invalid route")
 	}
 
 	rel := strings.TrimPrefix(rawPath, route.Prefix)
 	if rel == "" || strings.Contains(rel, "\x00") || strings.Contains(rel, "..") || strings.HasPrefix(rel, "/") {
-		return "", "", errors.New("invalid resource path")
+		return "", errors.New("invalid resource path")
+	}
+
+	if route.StrictRel && strings.Contains(rel, "/") {
+		return "", errors.New("invalid avatar path")
 	}
 
 	cleanRel := path.Clean("/" + rel)
 	if cleanRel == "/" || strings.HasPrefix(cleanRel, "/../") || cleanRel == "/.." {
-		return "", "", errors.New("invalid resource path")
+		return "", errors.New("invalid resource path")
 	}
-	cleanRel = strings.TrimPrefix(cleanRel, "/")
+	return strings.TrimPrefix(cleanRel, "/"), nil
+}
 
-	base, err := url.Parse(route.UpstreamBase)
+func (s *Server) buildTargetURL(rel string, up Upstream, r *http.Request) (string, string, error) {
+	base, err := url.Parse(up.Base)
 	if err != nil {
 		return "", "", errors.New("invalid upstream")
 	}
-	base.Path = strings.TrimRight(base.Path, "/") + "/" + cleanRel
+	base.Path = strings.TrimRight(base.Path, "/") + "/" + rel
 	base.RawQuery = sanitizedQuery(r.URL.Query()).Encode()
 
-	keySource := route.Name + "|" + base.String()
-	sum := sha256.Sum256([]byte(keySource))
-	return base.String(), hex.EncodeToString(sum[:]), nil
+	return base.String(), cacheKey(up.Name, base.String()), nil
+}
+
+func cacheKey(name string, targetURL string) string {
+	sum := sha256.Sum256([]byte(name + "|" + targetURL))
+	return hex.EncodeToString(sum[:])
 }
 
 func sanitizedQuery(values url.Values) url.Values {
 	clean := url.Values{}
 	keys := make([]string, 0, len(values))
 	for key := range values {
-		if key == "flush" || key == "flush_token" || key == "purge" || key == "purge_token" {
-			continue
-		}
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
@@ -397,26 +468,28 @@ func sanitizedQuery(values url.Values) url.Values {
 	return clean
 }
 
-func (s *Server) fetchAndCacheWithStats(w http.ResponseWriter, r *http.Request, targetURL string, key string, ttl time.Duration) {
+func (s *Server) fetchAndCacheWithStats(w http.ResponseWriter, r *http.Request, targetURL string, key string, ttl time.Duration, upstreamName string) bool {
 	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, targetURL, nil)
 	if err != nil {
-		http.Error(w, "bad gateway", http.StatusBadGateway)
-		return
+		return false
 	}
 	copyRequestHeaders(req.Header, r.Header)
 	req.Header.Set("User-Agent", "StarCDN-GoProxy/1.0")
 
 	resp, err := s.client.Do(req)
 	if err != nil {
-		http.Error(w, "bad gateway", http.StatusBadGateway)
-		return
+		return false
 	}
 	defer resp.Body.Close()
 
+	// 5xx 由调用方触发备用上游
+	if resp.StatusCode >= 500 {
+		return false
+	}
+
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 256*1024*1024))
 	if err != nil {
-		http.Error(w, "bad gateway", http.StatusBadGateway)
-		return
+		return false
 	}
 
 	bytesSent := int64(len(body))
@@ -432,6 +505,7 @@ func (s *Server) fetchAndCacheWithStats(w http.ResponseWriter, r *http.Request, 
 	}
 	header.Set("Cache-Control", fmt.Sprintf("public, max-age=%d", int(ttl.Seconds())))
 	header.Set("X-StarCDN-Cache", "MISS")
+	header.Set("X-StarCDN-Upstream", upstreamName)
 
 	if resp.StatusCode == http.StatusOK {
 		_ = s.writeCache(key, cacheMeta{
@@ -447,6 +521,7 @@ func (s *Server) fetchAndCacheWithStats(w http.ResponseWriter, r *http.Request, 
 	if r.Method != http.MethodHead {
 		_, _ = w.Write(body)
 	}
+	return true
 }
 
 func (s *Server) serveCache(w http.ResponseWriter, r *http.Request, key string) bool {
@@ -511,30 +586,6 @@ func (s *Server) deleteCache(key string) error {
 	return nil
 }
 
-func (s *Server) handlePurge(_ ProxyRoute, r *http.Request, _ string, targetURL string) {
-	if !strings.Contains(targetURL, "cdn.jsdelivr.net") {
-		return
-	}
-
-	purgeURL := strings.Replace(targetURL, "https://cdn.jsdelivr.net", "https://purge.jsdelivr.net", 1)
-
-	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, purgeURL, nil)
-	if err != nil {
-		return
-	}
-	req.Header.Set("User-Agent", "StarCDN-Purge/1.0")
-
-	resp, err := s.client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		return
-	}
-}
-
 func writeFileAtomic(name string, data []byte) error {
 	tmp := name + ".tmp"
 	if err := os.WriteFile(tmp, data, 0644); err != nil {
@@ -543,10 +594,97 @@ func writeFileAtomic(name string, data []byte) error {
 	return os.Rename(tmp, name)
 }
 
+// runCacheCleanup 定期扫描缓存目录，删除已过期的 .body / .json 配对文件
+func (s *Server) runCacheCleanup(ttl time.Duration) {
+	defer close(s.cleanupDone)
+
+	// 清理周期取 TTL 的一半（最少 30 秒）—— 既能及时回收，又不会频繁扫盘
+	interval := ttl / 2
+	if interval < 30*time.Second {
+		interval = 30 * time.Second
+	}
+
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-s.cleanupStop:
+			return
+		case <-ticker.C:
+			s.sweepExpiredCache()
+		}
+	}
+}
+
+// sweepExpiredCache 删除 ExpiresAt 早于当前时间的缓存条目（同时清理 .body 和 .json）
+func (s *Server) sweepExpiredCache() {
+	entries, err := os.ReadDir(s.cfg.CacheDir)
+	if err != nil {
+		return
+	}
+	now := time.Now().UTC()
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".json") {
+			continue
+		}
+		metaPath := filepath.Join(s.cfg.CacheDir, name)
+		metaBytes, err := os.ReadFile(metaPath)
+		if err != nil {
+			continue
+		}
+		var meta cacheMeta
+		if err := json.Unmarshal(metaBytes, &meta); err != nil {
+			// 哈希校验文件已损坏，连同 body 一起删除
+			bodyPath := strings.TrimSuffix(metaPath, ".json") + ".body"
+			_ = os.Remove(metaPath)
+			_ = os.Remove(bodyPath)
+			continue
+		}
+		if now.After(meta.ExpiresAt) {
+			bodyPath := strings.TrimSuffix(metaPath, ".json") + ".body"
+			_ = os.Remove(metaPath)
+			_ = os.Remove(bodyPath)
+		}
+	}
+}
+
 func (s *Server) setSecurityHeaders(w http.ResponseWriter) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-	w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+	w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation()")
+
+	// CORS: 公共代理默认 *,复用上游客显式声明的 ACAO 时以下行为辅助头
+	if w.Header().Get("Access-Control-Allow-Origin") == "" {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+	}
+	w.Header().Set("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Expose-Headers", "X-StarCDN-Cache, X-StarCDN-Upstream, Age, Content-Length, Content-Range")
+	w.Header().Set("Access-Control-Max-Age", "86400")
+	w.Header().Set("Timing-Allow-Origin", "*")
+	w.Header().Set("Cross-Origin-Resource-Policy", "cross-origin")
+
+	// CSP: 公共代理转发任意内容,采用宽松但有边界的策略。
+	// frame-ancestors 'none' 防 clickjacking;base-uri 'self' 防 base 标签劫持;
+	// object-src 'none' 防 Flash/Java 等老插件向量;form-action 'self' 允许同源表单提交。
+	w.Header().Set("Content-Security-Policy",
+		"default-src * data: blob: 'unsafe-inline' 'unsafe-eval'; "+
+			"frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'")
+}
+
+// handleOptions 响应 CORS 预检;实际缓存与代理仍走 GET/HEAD 链路。
+func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Access-Control-Request-Method") != "" {
+		w.Header().Set("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", r.Header.Get("Access-Control-Request-Headers"))
+		w.Header().Set("Vary", "Origin, Access-Control-Request-Method, Access-Control-Request-Headers")
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func copyRequestHeaders(dst http.Header, src http.Header) {
@@ -601,14 +739,6 @@ func clientIP(r *http.Request) string {
 	return host
 }
 
-func isPrivateClient(r *http.Request) bool {
-	ip := net.ParseIP(clientIP(r))
-	if ip == nil {
-		return false
-	}
-	return ip.IsLoopback() || ip.IsPrivate()
-}
-
 type rateLimiter struct {
 	mu     sync.Mutex
 	limit  int
@@ -641,4 +771,107 @@ func (r *rateLimiter) allow(key string) bool {
 	item.count++
 	r.items[key] = item
 	return true
+}
+
+var (
+	qqBareNumber = regexp.MustCompile(`^\d{4,12}$`)
+	qqEmailRe    = regexp.MustCompile(`^(\d{4,12})@qq\.com$`)
+	md5HexRe     = regexp.MustCompile(`^[a-f0-9]{32}$`)
+	anyEmailRe   = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
+)
+
+// quickSize 把 s=1~5 映射成常用头像尺寸（覆盖 1-2048 之外的"快捷档"）
+var quickSize = map[int]int{
+	1: 40,
+	2: 80,
+	3: 160,
+	4: 320,
+	5: 640,
+}
+
+// avatarURLBuilder 分发 QQ 头像 / WeAvatar 头像 / Gravatar 头像：
+//   - 纯数字（4-12 位 QQ 号）        → 腾讯 QQ 头像
+//   - 数字@qq.com                    → 提取 QQ 号 → 腾讯 QQ 头像
+//   - 32 位 MD5 hex（原生 hash 传入）→ WeAvatar 主，Gravatar 备
+//   - 其他 email                     → 内部 MD5(lowercase) → WeAvatar 主，Gravatar 备
+//   - 其他字符串                     → 当 hash 直接代理：WeAvatar 主，Gravatar 备
+func avatarURLBuilder(rel string, r *http.Request) []ResolvedURL {
+	q := r.URL.Query()
+	size := avatarSize(q)
+	defaultAvatar := q.Get("d")
+	if defaultAvatar == "" {
+		defaultAvatar = "identicon"
+	}
+
+	lower := strings.ToLower(strings.TrimSpace(rel))
+
+	// 1) 纯数字 → QQ 头像
+	if qqBareNumber.MatchString(lower) {
+		return []ResolvedURL{{
+			TargetURL:    fmt.Sprintf("https://q1.qlogo.cn/g?b=qq&nk=%s&s=%s", lower, size),
+			UpstreamName: "qq",
+		}}
+	}
+
+	// 2) 数字@qq.com → QQ 头像
+	if m := qqEmailRe.FindStringSubmatch(lower); len(m) == 2 {
+		return []ResolvedURL{{
+			TargetURL:    fmt.Sprintf("https://q1.qlogo.cn/g?b=qq&nk=%s&s=%s", m[1], size),
+			UpstreamName: "qq",
+		}}
+	}
+
+	// 3) 32 位 MD5 hex（原生 hash）→ WeAvatar 主，Gravatar 备
+	if md5HexRe.MatchString(lower) {
+		return gravatarChain(lower, size, defaultAvatar)
+	}
+
+	// 4) 其他 email → MD5 → WeAvatar 主，Gravatar 备
+	if anyEmailRe.MatchString(lower) {
+		sum := md5.Sum([]byte(lower))
+		hash := hex.EncodeToString(sum[:])
+		return gravatarChain(hash, size, defaultAvatar)
+	}
+
+	// 5) 兜底：当 hash 直接代理（lowercase 后传）→ WeAvatar 主，Gravatar 备
+	return gravatarChain(url.PathEscape(lower), size, defaultAvatar)
+}
+
+// gravatarChain 返回 WeAvatar 主 + Gravatar 备 的上游链
+func gravatarChain(hash, size, defaultAvatar string) []ResolvedURL {
+	return []ResolvedURL{
+		{
+			TargetURL:    fmt.Sprintf("https://weavatar.com/avatar/%s?s=%s&d=%s", hash, size, defaultAvatar),
+			UpstreamName: "weavatar",
+		},
+		{
+			TargetURL:    fmt.Sprintf("https://secure.gravatar.com/avatar/%s?s=%s&d=%s", hash, size, defaultAvatar),
+			UpstreamName: "gravatar",
+		},
+	}
+}
+
+// avatarSize 从 query 中读取 s 或 size（s 优先）：
+//   - 1~5  → 走 quickSize 映射（40/80/160/320/640）
+//   - 其他 → 原样使用，限制在 1-2048
+//   - 缺省/非法 → 80
+func avatarSize(q url.Values) string {
+	raw := q.Get("s")
+	if raw == "" {
+		raw = q.Get("size")
+	}
+	if raw == "" {
+		return "80"
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil || n < 1 {
+		return "80"
+	}
+	if v, ok := quickSize[n]; ok {
+		return strconv.Itoa(v)
+	}
+	if n > 2048 {
+		n = 2048
+	}
+	return strconv.Itoa(n)
 }

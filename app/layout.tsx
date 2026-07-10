@@ -4,7 +4,7 @@ import './styles/home.css';
 import './styles/not-found.css';
 import './styles/waf.css';
 
-const siteUrl = 'https://jscdn.wuxit.cn';
+const siteUrl = 'https://fastjs.qixz.cn';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

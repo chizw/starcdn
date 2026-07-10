@@ -58,8 +58,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.handlePasswordLogin(w, r)
 	case path == "/admin/api/logout":
 		h.requireAuth(w, r, h.handleLogout)
-	case path == "/admin/api/flush":
-		h.requireAuth(w, r, h.handleFlush)
 	case path == "/admin/api/password":
 		if r.Method == http.MethodPost {
 			h.requireAuth(w, r, h.handleChangePassword)
@@ -285,10 +283,6 @@ func (h *Handler) handleDeleteBan(w http.ResponseWriter, r *http.Request, id int
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"message": "ban rule deleted"})
-}
-
-func (h *Handler) handleFlush(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{"message": "flush requested"})
 }
 
 type changePasswordRequest struct {

@@ -34,20 +34,20 @@ const features = [
 
 const steps = [
   { title: '定位原始资源', code: '//cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js' },
-  { title: '替换加速域名', code: '//jscdn.wuxit.cn/npm/jquery@3.6.0/dist/jquery.min.js' },
-  { title: '写入项目代码', code: '<script src="//jscdn.wuxit.cn/npm/jquery@3.6.0/dist/jquery.min.js"></script>' },
+  { title: '替换加速域名', code: '//fastjs.qixz.cn/npm/jquery@3.6.0/dist/jquery.min.js' },
+  { title: '写入项目代码', code: '<script src="//fastjs.qixz.cn/npm/jquery@3.6.0/dist/jquery.min.js"></script>' },
   { title: '刷新并验证', code: 'F12 → Network → 查看资源加载来源与耗时' },
 ];
 
 const recipes = [
-  { name: 'Jsdelivr', source: '//cdn.jsdelivr.net', target: '//jscdn.wuxit.cn' },
-  { name: 'Gravatar', source: '//www.gravatar.com/avatar', target: '//jscdn.wuxit.cn/avatar' },
-  { name: 'Cdnjs', source: '//cdnjs.cloudflare.com/ajax/libs', target: '//jscdn.wuxit.cn/ajax/libs' },
+  { name: 'Jsdelivr', source: '//cdn.jsdelivr.net', target: '//fastjs.qixz.cn' },
+  { name: 'Gravatar', source: '//www.gravatar.com/avatar', target: '//fastjs.qixz.cn/avatar' },
+  { name: 'Cdnjs', source: '//cdnjs.cloudflare.com/ajax/libs', target: '//fastjs.qixz.cn/ajax/libs' },
 ];
 
 const faqs = [
   { q: 'Star⭐CDN 是免费的吗？', a: '基础公共资源加速服务保持免费，适合个人站点、开源项目与中小型业务快速接入。' },
-  { q: '资源如何保持更新？', a: '系统会按资源热度自动同步上游内容，也可以在链接后添加 ?flush=1 主动触发刷新。' },
+  { q: '资源如何保持更新？', a: '系统会按资源热度自动同步上游内容，本地缓存仅保留约 10 分钟用于吸收短时流量峰值并给上游 CDN 留出缓存窗口。' },
   { q: '有哪些合理限制？', a: '免费服务面向公开资源，不适用于私有文件、大体积分发或异常高频滥用请求。' },
   { q: '遇到问题如何反馈？', a: '可以通过 help@wuxit.cn、GitHub Issues 或 QQ 群提交资源异常、安全风险和体验建议。' },
 ];
@@ -67,10 +67,10 @@ const jsonLd = {
   provider: {
     '@type': 'Organization',
     name: '信网',
-    url: 'https://jscdn.wuxit.cn',
+    url: 'https://fastjs.qixz.cn',
   },
   areaServed: 'CN',
-  url: 'https://jscdn.wuxit.cn',
+  url: 'https://fastjs.qixz.cn',
   description: 'StarCDN 为 Jsdelivr、Gravatar、Cdnjs 等公共资源提供稳定、快速、免费的 CDN 镜像加速服务。',
 };
 
@@ -102,7 +102,7 @@ export default function Home() {
             <a key={item.href} href={item.href}>{item.label}</a>
           ))}
         </nav>
-        <a className="header-action" href="https://github.com/scfcn/StarCDN" target="_blank" rel="noreferrer">GitHub</a>
+        <a className="header-action" href="https://github.com/chizw/StarCDN" target="_blank" rel="noreferrer">GitHub</a>
       </header>
 
       <section className="hero-section">
@@ -263,7 +263,7 @@ export default function Home() {
                 <span>发送邮件</span>
                 <strong>help@wuxit.cn</strong>
               </a>
-              <a className="feedback-button secondary" href="https://github.com/scfcn/StarCDN/issues" target="_blank" rel="noreferrer">
+              <a className="feedback-button secondary" href="https://github.com/chizw/StarCDN/issues" target="_blank" rel="noreferrer">
                 <span>提交 Issue</span>
                 <strong>GitHub Repository</strong>
               </a>
@@ -288,8 +288,8 @@ export default function Home() {
         <div className="footer-links">
           <a href="#features">产品能力</a>
           <a href="#usage">接入指南</a>
-          <a href="https://jscdn.wuxit.cn" target="_blank" rel="noreferrer">信网智能 CDN</a>
-          <a href="https://github.com/scfcn/StarCDN" target="_blank" rel="noreferrer">GitHub 项目</a>
+          <a href="https://fastjs.qixz.cn" target="_blank" rel="noreferrer">信网智能 CDN</a>
+          <a href="https://github.com/chizw/StarCDN" target="_blank" rel="noreferrer">GitHub 项目</a>
         </div>
         <div className="footer-meta">
           <span>Copyright © 2024-2026 Star⭐CDN · 信网 · All Rights Reserved</span>

@@ -3,6 +3,8 @@ package db
 import (
 	"database/sql"
 	"encoding/json"
+	"regexp"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -396,5 +398,45 @@ func matchBanPattern(requestPath, pattern string) bool {
 	if pattern == "" {
 		return false
 	}
-	return requestPath == pattern || (pattern[len(pattern)-1] == '*' && len(requestPath) >= len(pattern)-1 && requestPath[:len(pattern)-1] == pattern[:len(pattern)-1])
+
+	// 1) 显式正则:用 /.../ 包裹
+	if len(pattern) >= 2 && pattern[0] == '/' && pattern[len(pattern)-1] == '/' {
+		re, err := regexp.Compile(pattern[1 : len(pattern)-1])
+		if err != nil {
+			return false
+		}
+		return re.MatchString(requestPath)
+	}
+
+	// 2) 扩展名过滤:ext:js,css,mjs (或 *.ext 形式,兼容传统匹配)
+	if strings.HasPrefix(pattern, "ext:") {
+		exts := strings.ToLower(strings.TrimPrefix(pattern, "ext:"))
+		lower := strings.ToLower(requestPath)
+		for _, ext := range strings.Split(exts, ",") {
+			ext = strings.TrimSpace(ext)
+			if ext == "" {
+				continue
+			}
+			if !strings.HasPrefix(ext, ".") {
+				ext = "." + ext
+			}
+			if strings.HasSuffix(lower, ext) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// 3) 前缀/后缀通配:*.js、/api/*、secret-*
+	if strings.HasPrefix(pattern, "*.") {
+		ext := strings.ToLower(strings.TrimPrefix(pattern, "*"))
+		return strings.HasSuffix(strings.ToLower(requestPath), ext)
+	}
+	if strings.HasSuffix(pattern, "*") {
+		prefix := pattern[:len(pattern)-1]
+		return strings.HasPrefix(requestPath, prefix)
+	}
+
+	// 4) 精确匹配 (默认)
+	return requestPath == pattern
 }

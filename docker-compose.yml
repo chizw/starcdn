@@ -1,6 +1,6 @@
 services:
   starcdn:
-    image: ghcr.io/scfcn/starcdn:latest
+    image: ghcr.io/chizw/starcdn:latest
     ports:
       - "2607:2607"
     env_file:
