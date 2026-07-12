@@ -1,12 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Alert } from '../../../components/ui/alert';
-import { Button } from '../../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
 
 interface BanRule {
   id: number;
@@ -87,79 +81,105 @@ export default function BansPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
-        <div className="loading-spinner" />
+      <div className="admin-loading">
+        <span className="admin-loading-dot" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">封禁规则</h1>
-        <p className="mt-2 text-sm text-zinc-500">管理会在回源与缓存读取前生效的 URL 拦截规则。</p>
+    <div>
+      <div className="admin-page-header">
+        <div>
+          <h1 className="admin-page-title">封禁规则</h1>
+          <p className="admin-page-desc">管理会在回源与缓存读取前生效的 URL 拦截规则。</p>
+        </div>
+        <span className="admin-badge">{rules.length} 条规则</span>
       </div>
 
-      {error && <Alert variant="destructive">{error}</Alert>}
+      {error && <div className="admin-alert" role="alert">{error}</div>}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>添加封禁规则</CardTitle>
-          <CardDescription>支持路径或通配符模式，例如 *.exe 或 /npm/twikoo*。</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end" onSubmit={handleCreateRule}>
-            <div className="space-y-2">
-              <Label htmlFor="pattern">匹配模式</Label>
-              <Input id="pattern" type="text" placeholder="例如：*.exe 或 /npm/twikoo*" value={pattern} onChange={(e) => setPattern(e.target.value)} required />
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <div>
+            <h2 className="admin-card-title">添加封禁规则</h2>
+            <p className="admin-card-desc">支持路径或通配符模式，例如 <code>*.exe</code> 或 <code>/npm/twikoo*</code>。</p>
+          </div>
+        </div>
+        <div className="admin-card-body">
+          <form className="admin-form-grid" onSubmit={handleCreateRule}>
+            <div className="admin-field" style={{ marginBottom: 0 }}>
+              <label className="admin-label" htmlFor="pattern">匹配模式</label>
+              <input
+                id="pattern"
+                type="text"
+                className="admin-input"
+                placeholder="例如 *.exe 或 /npm/twikoo*"
+                value={pattern}
+                onChange={(e) => setPattern(e.target.value)}
+                required
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="reason">原因</Label>
-              <Input id="reason" type="text" placeholder="封禁原因说明（可选）" value={reason} onChange={(e) => setReason(e.target.value)} />
+            <div className="admin-field" style={{ marginBottom: 0 }}>
+              <label className="admin-label" htmlFor="reason">原因</label>
+              <input
+                id="reason"
+                type="text"
+                className="admin-input"
+                placeholder="封禁原因说明（可选）"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
             </div>
-            <Button type="submit" disabled={submitting}>{submitting ? '添加中...' : '添加规则'}</Button>
+            <button type="submit" className="admin-btn" disabled={submitting}>
+              {submitting ? '添加中…' : '添加规则'}
+            </button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>规则列表</CardTitle>
-          <CardDescription>当前生效的拦截规则。</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <div>
+            <h2 className="admin-card-title">规则列表</h2>
+            <p className="admin-card-desc">当前生效的拦截规则。</p>
+          </div>
+        </div>
+        <div className="admin-card-body">
           {rules.length > 0 ? (
-            <div className="overflow-x-auto rounded-xl border border-zinc-200">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[70px]">ID</TableHead>
-                    <TableHead>模式</TableHead>
-                    <TableHead>原因</TableHead>
-                    <TableHead className="w-[180px]">创建时间</TableHead>
-                    <TableHead className="w-[90px]">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+            <div style={{ overflowX: 'auto', borderRadius: 14, border: '1px solid var(--admin-border)' }}>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: 70 }}>ID</th>
+                    <th>模式</th>
+                    <th>原因</th>
+                    <th style={{ width: 180 }}>创建时间</th>
+                    <th style={{ width: 100 }}>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {rules.map((rule) => (
-                    <TableRow key={rule.id}>
-                      <TableCell className="font-semibold text-zinc-950">{rule.id}</TableCell>
-                      <TableCell className="break-all font-mono text-xs text-zinc-800">{rule.pattern}</TableCell>
-                      <TableCell>{rule.reason || '--'}</TableCell>
-                      <TableCell className="text-xs">{rule.created_at ? new Date(rule.created_at).toLocaleString('zh-CN') : '--'}</TableCell>
-                      <TableCell>
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteRule(rule.id)}>删除</Button>
-                      </TableCell>
-                    </TableRow>
+                    <tr key={rule.id}>
+                      <td style={{ fontWeight: 600 }}>#{rule.id}</td>
+                      <td style={{ wordBreak: 'break-all', fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, monospace)', fontSize: 12 }}>{rule.pattern}</td>
+                      <td>{rule.reason || '--'}</td>
+                      <td style={{ fontSize: 12, color: 'var(--admin-text-soft)' }}>
+                        {rule.created_at ? new Date(rule.created_at).toLocaleString('zh-CN') : '--'}
+                      </td>
+                      <td>
+                        <button type="button" className="admin-btn is-danger" onClick={() => handleDeleteRule(rule.id)}>删除</button>
+                      </td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
+                </tbody>
+              </table>
             </div>
           ) : (
-            <p className="py-10 text-center text-sm text-zinc-500">暂无封禁规则</p>
+            <div className="admin-empty">暂无封禁规则</div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

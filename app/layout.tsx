@@ -1,69 +1,55 @@
-import type { Metadata, Viewport } from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
-
-const siteUrl = 'https://fastjs.qixz.cn';
+import './admin/admin.css';
+import { LanguageProvider } from '@/i18n';
+import SiteChrome from './site-chrome';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: 'StarCDN - 免费公共 CDN 镜像加速服务',
-    template: '%s | StarCDN',
-  },
-  description: '信网开源项目免费CDN加速服务 - 提供Jsdelivr、Gravatar等公共库的稳定、快速、免费CDN镜像加速。支持HTTPS(SSL)和HTTP/3.0协议，全球多节点部署，提升网站加载速度。',
-  keywords: ['免费CDN', '公共库CDN', '前端加速', 'Jsdelivr镜像', 'Gravatar镜像', 'cdnjs镜像', 'HTTP3加速', '静态资源加速'],
-  authors: [{ name: '信网' }],
-  creator: '信网',
-  publisher: '信网',
-  alternates: {
-    canonical: '/',
-  },
-  openGraph: {
-    type: 'website',
-    locale: 'zh_CN',
-    url: '/',
-    siteName: 'StarCDN',
-    title: 'StarCDN - 免费公共 CDN 镜像加速服务',
-    description: '为 Jsdelivr、Gravatar、cdnjs 等公共资源提供稳定、快速、免费的 CDN 镜像加速服务，支持 HTTPS、HTTP/2 与 HTTP/3。',
-    images: [{ url: '/favicon.ico', width: 48, height: 48, alt: 'StarCDN' }],
-  },
-  twitter: {
-    card: 'summary',
-    title: 'StarCDN - 免费公共 CDN 镜像加速服务',
-    description: '稳定、快速、轻量的公共资源 CDN 镜像加速服务。',
-    images: ['/favicon.ico'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-      'max-video-preview': -1,
-    },
-  },
-  icons: {
-    icon: '/favicon.ico',
-    apple: '/favicon.ico',
-  },
+  title: 'StarCDN - 免费前端公共库资源加速',
+  description: '基于自研系统，搭配边缘计算和多层智能缓存，为全球用户提供低延迟、高速、稳定的免费前端公共库资源加速服务。',
 };
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  viewportFit: 'cover',
-};
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // 静态导出模式：默认 zh，客户端会从 cookie 同步真实语言
+  const initialLang = 'zh' as const;
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" data-lang={initialLang} suppressHydrationWarning>
       <head>
-        <meta name="renderer" content="webkit" />
-        <meta name="force-rendering" content="webkit" />
-        <meta httpEquiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+        <link rel="stylesheet" href="https://fastjs.qixz.cn/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" />
+        <link rel="preload" href="/1666963922.woff" as="font" type="font/woff" crossOrigin="anonymous" />
+        <style dangerouslySetInnerHTML={{ __html: `
+          @font-face {
+            font-family: 'woff';
+            src: url('/1666963922.woff') format('woff');
+            font-display: swap;
+          }
+          body { font-family: 'woff', sans-serif; }
+        `}} />
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            try {
+              var t = localStorage.getItem('theme');
+              if (t === 'dark' || t === 'light') {
+                document.documentElement.setAttribute('data-theme', t);
+              } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+                document.documentElement.setAttribute('data-theme', 'light');
+              }
+            } catch(e) {}
+            var m=document.cookie.match(/(?:^|;\\s*)lang=(en|zh)(?:;|$)/);
+            var l=m?m[1]:null;
+            if(l&&l!==document.documentElement.getAttribute('data-lang')){
+              document.documentElement.setAttribute('data-lang',l);
+              document.documentElement.lang=l==='en'?'en':'zh-CN';
+            }
+          })();
+        `}} />
       </head>
-      <body>{children}</body>
+      <body>
+        <LanguageProvider initialLang={initialLang}>
+          <SiteChrome>{children}</SiteChrome>
+        </LanguageProvider>
+      </body>
     </html>
   );
 }

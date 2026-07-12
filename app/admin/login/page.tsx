@@ -1,12 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Alert } from '../../components/ui/alert';
-import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { cn } from '../../lib/utils';
 
 function base64UrlToArrayBuffer(base64url: string): ArrayBuffer {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
@@ -105,9 +99,7 @@ export default function LoginPage() {
             clientDataJSON: arrayBufferToBase64Url(response.clientDataJSON),
             authenticatorData: arrayBufferToBase64Url(response.authenticatorData),
             signature: arrayBufferToBase64Url(response.signature),
-            userHandle: response.userHandle
-              ? arrayBufferToBase64Url(response.userHandle)
-              : null,
+            userHandle: response.userHandle ? arrayBufferToBase64Url(response.userHandle) : null,
           },
         }),
       });
@@ -125,52 +117,67 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-5 py-10 text-zinc-950">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(39,39,42,0.10),transparent_30rem)]" />
-      <Card className="relative w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950 text-lg font-semibold text-white">S</div>
-          <CardTitle className="text-2xl">StarCDN Admin</CardTitle>
-          <CardDescription>登录 fastjs.qixz.cn 管理控制台</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-5 grid grid-cols-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1">
-            {(['password', 'passkey'] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                className={cn(
-                  'rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition',
-                  activeTab === tab && 'bg-white text-zinc-950 shadow-sm',
-                )}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab === 'password' ? '密码登录' : 'PASSKEY 登录'}
-              </button>
-            ))}
-          </div>
+    <main className="admin-login-shell">
+      <section className="admin-login-card" aria-labelledby="admin-login-title">
+        <div className="admin-login-mark" aria-hidden="true">S</div>
+        <h1 id="admin-login-title" className="admin-login-title">StarCDN Admin</h1>
+        <p className="admin-login-desc">登录 fastjs.qixz.cn 管理控制台</p>
 
-          {error && <Alert variant="destructive" className="mb-5">{error}</Alert>}
+        <div className="admin-login-tabs" role="tablist" aria-label="登录方式">
+          {(['password', 'passkey'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab}
+              className={`admin-login-tab${activeTab === tab ? ' is-active' : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === 'password' ? '密码登录' : 'PASSKEY 登录'}
+            </button>
+          ))}
+        </div>
 
-          {activeTab === 'password' ? (
-            <form className="space-y-4" onSubmit={handlePasswordLogin}>
-              <div className="space-y-2">
-                <Label htmlFor="username">用户名</Label>
-                <Input id="username" type="text" placeholder="请输入用户名" value={username} onChange={(e) => setUsername(e.target.value)} required autoComplete="username" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">密码</Label>
-                <Input id="password" type="password" placeholder="请输入密码" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>{loading ? '登录中...' : '登录'}</Button>
-            </form>
-          ) : (
-            <Button type="button" className="w-full" onClick={handlePasskeyLogin} disabled={loading}>
-              {loading ? '验证中...' : '使用 PASSKEY 登录'}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+        {error && <div className="admin-alert" role="alert">{error}</div>}
+
+        {activeTab === 'password' ? (
+          <form onSubmit={handlePasswordLogin} noValidate>
+            <div className="admin-field">
+              <label className="admin-label" htmlFor="username">用户名</label>
+              <input
+                id="username"
+                type="text"
+                className="admin-input"
+                placeholder="请输入用户名"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                autoComplete="username"
+              />
+            </div>
+            <div className="admin-field">
+              <label className="admin-label" htmlFor="password">密码</label>
+              <input
+                id="password"
+                type="password"
+                className="admin-input"
+                placeholder="请输入密码"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+            </div>
+            <button type="submit" className="admin-btn is-block" disabled={loading}>
+              {loading ? '登录中…' : '登录'}
+            </button>
+          </form>
+        ) : (
+          <button type="button" className="admin-btn is-block" onClick={handlePasskeyLogin} disabled={loading}>
+            {loading ? '验证中…' : '使用 PASSKEY 登录'}
+          </button>
+        )}
+      </section>
     </main>
   );
 }

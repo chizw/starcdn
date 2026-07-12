@@ -1,10 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Badge } from '../../components/ui/badge';
-import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 
 interface StatsData {
   total_requests?: number;
@@ -89,23 +85,23 @@ export default function DashboardPage() {
 
   if (loading && !stats) {
     return (
-      <div className="flex justify-center py-20">
-        <div className="loading-spinner" />
+      <div className="admin-loading">
+        <span className="admin-loading-dot" />
       </div>
     );
   }
 
   if (error && !stats) {
     return (
-      <Card className="mx-auto max-w-md text-center">
-        <CardHeader>
-          <CardTitle>加载失败</CardTitle>
-          <CardDescription>{error}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={() => fetchStats(page)}>重试</Button>
-        </CardContent>
-      </Card>
+      <div className="admin-card">
+        <div className="admin-card-body" style={{ textAlign: 'center' }}>
+          <h2 className="admin-card-title">加载失败</h2>
+          <p className="admin-card-desc" style={{ marginTop: 8 }}>{error}</p>
+          <div style={{ marginTop: 16 }}>
+            <button type="button" className="admin-btn" onClick={() => fetchStats(page)}>重试</button>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -116,67 +112,69 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+    <div>
+      <div className="admin-page-header">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">仪表盘</h1>
-          <p className="mt-2 text-sm text-zinc-500">查看 fastjs.qixz.cn 请求、流量和热门资源。</p>
+          <h1 className="admin-page-title">仪表盘</h1>
+          <p className="admin-page-desc">查看 fastjs.qixz.cn 的请求、流量和热门资源。</p>
         </div>
-        <Badge variant="success">自动刷新 30s · {lastRefresh.toLocaleTimeString('zh-CN')}</Badge>
+        <span className="admin-badge is-success">自动刷新 30s · {lastRefresh.toLocaleTimeString('zh-CN')}</span>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="admin-stat-grid">
         {statCards.map((item) => (
-          <Card key={item.label}>
-            <CardContent className="p-6">
-              <strong className="block text-4xl font-semibold tracking-tight text-zinc-950">{item.value}</strong>
-              <span className="mt-2 block text-sm text-zinc-500">{item.label}</span>
-            </CardContent>
-          </Card>
+          <div key={item.label} className="admin-stat">
+            <div className="admin-stat-label">{item.label}</div>
+            <div className="admin-stat-value">{item.value}</div>
+            <div className="admin-stat-foot">来自当前统计周期</div>
+          </div>
         ))}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Top URL</CardTitle>
-          <CardDescription>按请求量排序的热门资源路径。</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <div>
+            <h2 className="admin-card-title">Top URL</h2>
+            <p className="admin-card-desc">按请求量排序的热门资源路径。</p>
+          </div>
+          <span className="admin-badge">每页 {pageSize} 条</span>
+        </div>
+        <div className="admin-card-body">
           {stats?.top_urls && stats.top_urls.length > 0 ? (
             <>
-              <div className="overflow-x-auto rounded-xl border border-zinc-200">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>URL</TableHead>
-                      <TableHead className="w-[110px]">请求数</TableHead>
-                      <TableHead className="w-[110px]">流量</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+              <div style={{ overflowX: 'auto', borderRadius: 14, border: '1px solid var(--admin-border)' }}>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>URL</th>
+                      <th style={{ width: 110 }}>请求数</th>
+                      <th style={{ width: 110 }}>流量</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                     {stats.top_urls.map((item, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="break-all font-mono text-xs text-zinc-800">{item.request_path}</TableCell>
-                        <TableCell className="font-semibold text-zinc-950">{formatNumber(item.request_count)}</TableCell>
-                        <TableCell>{formatBytes(item.bytes_sent)}</TableCell>
-                      </TableRow>
+                      <tr key={i}>
+                        <td style={{ wordBreak: 'break-all', fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, monospace)', fontSize: 12 }}>{item.request_path}</td>
+                        <td style={{ fontWeight: 600 }}>{formatNumber(item.request_count)}</td>
+                        <td>{formatBytes(item.bytes_sent)}</td>
+                      </tr>
                     ))}
-                  </TableBody>
-                </Table>
+                  </tbody>
+                </table>
               </div>
               {(stats.total_pages || 0) > 1 && (
-                <div className="mt-5 flex items-center justify-end gap-3">
-                  <Button variant="outline" onClick={handlePrevPage} disabled={page <= 1}>上一页</Button>
-                  <span className="text-sm text-zinc-500">第 {page} / {stats.total_pages} 页</span>
-                  <Button variant="outline" onClick={handleNextPage} disabled={page >= (stats.total_pages || 1)}>下一页</Button>
+                <div className="admin-pagination">
+                  <button type="button" className="admin-btn is-outline" onClick={handlePrevPage} disabled={page <= 1}>上一页</button>
+                  <span>第 {page} / {stats.total_pages} 页</span>
+                  <button type="button" className="admin-btn is-outline" onClick={handleNextPage} disabled={page >= (stats.total_pages || 1)}>下一页</button>
                 </div>
               )}
             </>
           ) : (
-            <p className="py-10 text-center text-sm text-zinc-500">暂无数据</p>
+            <div className="admin-empty">暂无数据</div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

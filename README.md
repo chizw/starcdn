@@ -349,6 +349,10 @@ npm run build
 
 本项目基于 [MIT License](LICENSE) 开源。请在使用和二次分发时保留原始版权信息。
 
+## 鸣谢
+
+- [JsdMirror](https://cnb.cool/jsdmirror/home)
+
 ---
 
 <div align="center">

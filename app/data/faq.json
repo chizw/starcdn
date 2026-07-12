@@ -1,0 +1,44 @@
+[
+  {
+    "q": "StarCDN 与 JsDelivr 有什么区别？",
+    "qEn": "What is the difference between StarCDN and JsDelivr?",
+    "a": "StarCDN 完全兼容 JsDelivr 的 API 接口和使用方式，只需将域名从 cdn.jsdelivr.net 替换为 fastjs.qixz.cn 即可完成迁移。我们的优势在于国内访问速度更快、服务更稳定，并且完全免费。",
+    "aEn": "StarCDN is fully compatible with JsDelivr API and usage. Simply replace the domain from cdn.jsdelivr.net to fastjs.qixz.cn to migrate. Our advantage lies in faster domestic access and more stable service, all completely free."
+  },
+  {
+    "q": "StarCDN 是否真的完全免费？",
+    "qEn": "Is StarCDN really completely free?",
+    "a": "是的，StarCDN 对于个人和开源项目（非商业用途）永久免费。我们通过赞助商支持、企业定制服务来维持运营成本，不会向普通用户收费。未来如有商业版计划会提前公告。",
+    "aEn": "Yes, StarCDN is permanently free for individuals and open-source projects(Non-commercial). We sustain operations through sponsor support and enterprise customization services. We will never charge ordinary users. Any future commercial plans will be announced in advance."
+  },
+  {
+    "q": "支持哪些源站的资源加速？",
+    "qEn": "Which source platforms are supported?",
+    "a": "目前支持 NPM、GitHub、Gravatar、Google Fonts 和 CNB 等主流源站类型。覆盖了前端开发中最常用的资源来源，满足绝大多数开发需求。",
+    "aEn": "We currently support NPM, GitHub, Gravatar, Google Fonts, and CNB. This covers the most commonly used resource sources in front-end development."
+  },
+  {
+    "q": "加速节点的覆盖范围如何？",
+    "qEn": "What is the coverage of acceleration nodes?",
+    "a": "我们基于 阿里云 ESA 在全球部署了 160+ 边缘节点，覆盖亚洲、北美、欧洲等主要地区。国内用户将自动调度到最优节点，平均响应延迟低至 30ms。",
+    "aEn": "We have deployed 160+ edge nodes globally through Alibaba Cloud ESA, covering Asia, North America, Europe and other major regions. Domestic users are automatically routed to the optimal node with average latency as low as 30ms."
+  },
+  {
+    "q": "缓存策略是怎样的？",
+    "qEn": "What is the caching strategy?",
+    "a": "我们采用三级缓存策略：浏览器缓存 + CDN 边缘缓存 + 源站缓存。热门资源会被长期缓存在边缘节点，冷门资源按需回源拉取，确保速度与新鲜度的最佳平衡。",
+    "aEn": "We use a three-tier caching strategy: browser cache + CDN edge cache + origin cache. Popular resources are cached long-term on edge nodes, while less popular ones are pulled on demand for optimal speed and freshness."
+  },
+  {
+    "q": "资源如何保持更新？",
+    "qEn": "How are resources kept updated?",
+    "a": "系统会按资源热度自动同步上游内容，本地缓存仅保留约 10 分钟用于吸收短时流量峰值并给上游 CDN 留出缓存窗口。",
+    "aEn": "System automatically pulls resources from the source based on their update frequency. Local cache is only retained for about 10 minutes to absorb short-term traffic peaks and leave room for upstream CDN cache."
+  },
+  {
+    "q": "如何报告问题或提出建议？",
+    "qEn": "How do I report issues or make suggestions?",
+    "a": "你可以通过 GitHub Issues 提交问题，或加入我们的 QQ 群与开发团队直接沟通。我们非常重视社区反馈，通常会在 1~5 天内回复。",
+    "aEn": "You can submit issues via GitHub Issues, or join our QQ group to communicate directly with the dev team. We value community feedback and typically respond within 1~5 days."
+  }
+]

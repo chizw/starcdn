@@ -1,0 +1,34 @@
+[
+  {
+    "name": "阿里云ESA",
+    "desc": "边缘加速服务",
+    "descEn": "ESA CDN",
+    "logo": "/img/partners/esa.svg",
+    "logoDark": "/img/partners/esa.svg",
+    "href": "https://www.aliyun.com/product/esa"
+  },
+  {
+    "name": "Cloudflare",
+    "desc": "应急中转CDN",
+    "descEn": "Emergency CDN",
+    "logo": "/img/partners/cloudflare.svg",
+    "logoDark": "/img/partners/cloudflare.svg",
+    "href": "https://www.cloudflare.com"
+  },
+  {
+    "name": "宝塔面板",
+    "desc": "服务器运维管理",
+    "descEn": "Server Management",
+    "logo": "/img/partners/bt.svg",
+    "logoDark": "/img/partners/bt.svg",
+    "href": "https://www.bt.cn"
+  },
+  {
+    "name": "八壹云计算",
+    "desc": "云服务器赞助商",
+    "descEn": "Cloud Server Sponsorship",
+    "logo": "/img/partners/81cloud.webp",
+    "logoDark": "/img/partners/81cloud.webp",
+    "href": "https://www.qixz.cn/81x"
+  }
+]

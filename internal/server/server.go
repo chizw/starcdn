@@ -126,20 +126,8 @@ func New(cfg Config) (*Server, error) {
 	}
 
 	return &Server{
-		cfg: cfg,
-		routes: []ProxyRoute{
-			{Name: "gh", Prefix: "/gh/", Upstreams: []Upstream{
-				{Name: "jsdelivr", Base: "https://cdn.jsdelivr.net/gh/"},
-			}, CacheTTL: cfg.CacheTTL},
-			{Name: "npm", Prefix: "/npm/", Upstreams: []Upstream{
-				{Name: "unpkg", Base: "https://unpkg.com/"},
-				{Name: "jsdelivr", Base: "https://cdn.jsdelivr.net/npm/"},
-			}, CacheTTL: cfg.CacheTTL},
-			{Name: "cdnjs", Prefix: "/ajax/libs/", Upstreams: []Upstream{
-				{Name: "cdnjs", Base: "https://cdnjs.cloudflare.com/ajax/libs/"},
-			}, CacheTTL: cfg.CacheTTL},
-			{Name: "avatar", Prefix: "/avatar/", CacheTTL: cfg.CacheTTL, StrictRel: true, URLBuilder: avatarURLBuilder},
-		},
+		cfg:    cfg,
+		routes: defaultProxyRoutes(cfg.CacheTTL),
 		client: &http.Client{
 			Timeout: 30 * time.Second,
 			Transport: &http.Transport{
@@ -160,6 +148,22 @@ func New(cfg Config) (*Server, error) {
 		cleanupStop: make(chan struct{}),
 		cleanupDone: make(chan struct{}),
 	}, nil
+}
+
+func defaultProxyRoutes(cacheTTL time.Duration) []ProxyRoute {
+	return []ProxyRoute{
+		{Name: "gh", Prefix: "/gh/", Upstreams: []Upstream{
+			{Name: "jsdelivr", Base: "https://cdn.jsdelivr.net/gh/"},
+		}, CacheTTL: cacheTTL},
+		{Name: "npm", Prefix: "/npm/", Upstreams: []Upstream{
+			{Name: "unpkg", Base: "https://unpkg.com/"},
+			{Name: "jsdelivr", Base: "https://cdn.jsdelivr.net/npm/"},
+		}, CacheTTL: cacheTTL},
+		{Name: "cdnjs", Prefix: "/ajax/libs/", Upstreams: []Upstream{
+			{Name: "cdnjs", Base: "https://cdnjs.cloudflare.com/ajax/libs/"},
+		}, CacheTTL: cacheTTL},
+		{Name: "avatar", Prefix: "/avatar/", CacheTTL: cacheTTL, StrictRel: true, URLBuilder: avatarURLBuilder},
+	}
 }
 
 // Start 启动后台过期缓存清理协程
@@ -191,7 +195,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.URL.Path == "/api/stats" {
+	if r.URL.Path == "/api/stats/" {
 		s.handlePublicStats(w, r)
 		return
 	}
@@ -215,7 +219,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) matchRoute(requestPath string) (ProxyRoute, bool) {
 	for _, route := range s.routes {
-		if strings.HasPrefix(requestPath, route.Prefix) {
+		base := strings.TrimSuffix(route.Prefix, "/")
+		if requestPath == base || strings.HasPrefix(requestPath, route.Prefix) {
 			return route, true
 		}
 	}
@@ -331,6 +336,7 @@ func (s *Server) handlePublicStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleProxy(w http.ResponseWriter, r *http.Request, route ProxyRoute) {
+	fmt.Printf("[DEBUG] handleProxy: method=%s, path=%s\n", r.Method, r.URL.Path)
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -338,6 +344,7 @@ func (s *Server) handleProxy(w http.ResponseWriter, r *http.Request, route Proxy
 
 	if s.database != nil {
 		banned, _, err := s.database.IsPathBanned(r.URL.Path)
+		fmt.Printf("[DEBUG] handleProxy: IsPathBanned returned banned=%v, err=%v\n", banned, err)
 		if err == nil && banned {
 			http.Redirect(w, r, "/waf", http.StatusFound)
 			return
@@ -360,6 +367,7 @@ func (s *Server) handleProxy(w http.ResponseWriter, r *http.Request, route Proxy
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	fmt.Printf("[DEBUG] handleProxy: targets count=%d\n", len(targets))
 	if len(targets) == 0 {
 		http.Error(w, "no upstream available", http.StatusBadGateway)
 		return
@@ -387,6 +395,7 @@ type proxyTarget struct {
 func (s *Server) resolveTargets(route ProxyRoute, rel string, r *http.Request) ([]proxyTarget, error) {
 	if route.URLBuilder != nil {
 		resolved := route.URLBuilder(rel, r)
+		fmt.Printf("[DEBUG] resolveTargets: URLBuilder returned %d items\n", len(resolved))
 		if len(resolved) == 0 {
 			return nil, errors.New("invalid avatar path")
 		}
@@ -417,12 +426,20 @@ func (s *Server) extractRelPath(route ProxyRoute, r *http.Request) (string, erro
 	if err != nil {
 		return "", errors.New("invalid path")
 	}
+	fmt.Printf("[DEBUG] extractRelPath: rawPath=%s, route.Prefix=%s\n", rawPath, route.Prefix)
 	if !strings.HasPrefix(rawPath, route.Prefix) {
 		return "", errors.New("invalid route")
 	}
 
 	rel := strings.TrimPrefix(rawPath, route.Prefix)
+	fmt.Printf("[DEBUG] extractRelPath: rel after TrimPrefix=%s\n", rel)
 	if rel == "" || strings.Contains(rel, "\x00") || strings.Contains(rel, "..") || strings.HasPrefix(rel, "/") {
+		return "", errors.New("invalid resource path")
+	}
+
+	rel = strings.TrimSuffix(rel, "/")
+	fmt.Printf("[DEBUG] extractRelPath: rel after TrimSuffix=%s\n", rel)
+	if rel == "" {
 		return "", errors.New("invalid resource path")
 	}
 
@@ -431,9 +448,11 @@ func (s *Server) extractRelPath(route ProxyRoute, r *http.Request) (string, erro
 	}
 
 	cleanRel := path.Clean("/" + rel)
+	fmt.Printf("[DEBUG] extractRelPath: cleanRel=%s\n", cleanRel)
 	if cleanRel == "/" || strings.HasPrefix(cleanRel, "/../") || cleanRel == "/.." {
 		return "", errors.New("invalid resource path")
 	}
+	fmt.Printf("[DEBUG] extractRelPath: returning %s\n", strings.TrimPrefix(cleanRel, "/"))
 	return strings.TrimPrefix(cleanRel, "/"), nil
 }
 
@@ -482,8 +501,8 @@ func (s *Server) fetchAndCacheWithStats(w http.ResponseWriter, r *http.Request, 
 	}
 	defer resp.Body.Close()
 
-	// 5xx 由调用方触发备用上游
-	if resp.StatusCode >= 500 {
+	// 4xx 和 5xx 由调用方触发备用上游
+	if resp.StatusCode >= 400 {
 		return false
 	}
 
@@ -501,6 +520,14 @@ func (s *Server) fetchAndCacheWithStats(w http.ResponseWriter, r *http.Request, 
 	if header.Get("Content-Type") == "" {
 		if ext := path.Ext(req.URL.Path); ext != "" {
 			header.Set("Content-Type", mime.TypeByExtension(ext))
+		} else if len(body) > 0 && strings.HasPrefix(string(body), "\xff\xd8") {
+			header.Set("Content-Type", "image/jpeg")
+		} else if len(body) > 0 && strings.HasPrefix(string(body), "\x89PNG") {
+			header.Set("Content-Type", "image/png")
+		} else if len(body) > 0 && strings.HasPrefix(string(body), "GIF8") {
+			header.Set("Content-Type", "image/gif")
+		} else if len(body) > 0 && strings.HasPrefix(string(body), "RIFF") && strings.HasPrefix(string(body[4:]), "WEBP") {
+			header.Set("Content-Type", "image/webp")
 		}
 	}
 	header.Set("Cache-Control", fmt.Sprintf("public, max-age=%d", int(ttl.Seconds())))
@@ -807,18 +834,44 @@ func avatarURLBuilder(rel string, r *http.Request) []ResolvedURL {
 
 	// 1) 纯数字 → QQ 头像
 	if qqBareNumber.MatchString(lower) {
-		return []ResolvedURL{{
-			TargetURL:    fmt.Sprintf("https://q1.qlogo.cn/g?b=qq&nk=%s&s=%s", lower, size),
-			UpstreamName: "qq",
-		}}
+		return []ResolvedURL{
+			{
+				TargetURL:    fmt.Sprintf("https://q1.qlogo.cn/g?b=qq&nk=%s&s=%s", lower, size),
+				UpstreamName: "qq",
+			},
+			{
+				TargetURL:    fmt.Sprintf("https://q1.qlogo.cn/g?b=qq&nk=%s&s=640", lower),
+				UpstreamName: "qq_large",
+			},
+			{
+				TargetURL:    fmt.Sprintf("https://secure.gravatar.com/avatar/%s?s=%s&d=%s", md5Hex(lower), size, defaultAvatar),
+				UpstreamName: "gravatar",
+			},
+		}
 	}
 
-	// 2) 数字@qq.com → QQ 头像
+	// 2) 数字@qq.com → MD5 → WeAvatar/Gravatar 优先，QQ头像兜底
 	if m := qqEmailRe.FindStringSubmatch(lower); len(m) == 2 {
-		return []ResolvedURL{{
-			TargetURL:    fmt.Sprintf("https://q1.qlogo.cn/g?b=qq&nk=%s&s=%s", m[1], size),
-			UpstreamName: "qq",
-		}}
+		sum := md5.Sum([]byte(lower))
+		hash := hex.EncodeToString(sum[:])
+		return []ResolvedURL{
+			{
+				TargetURL:    fmt.Sprintf("https://weavatar.com/avatar/%s?s=%s&d=%s", hash, size, defaultAvatar),
+				UpstreamName: "weavatar",
+			},
+			{
+				TargetURL:    fmt.Sprintf("https://secure.gravatar.com/avatar/%s?s=%s&d=%s", hash, size, defaultAvatar),
+				UpstreamName: "gravatar",
+			},
+			{
+				TargetURL:    fmt.Sprintf("https://q1.qlogo.cn/g?b=qq&nk=%s&s=%s", m[1], size),
+				UpstreamName: "qq",
+			},
+			{
+				TargetURL:    fmt.Sprintf("https://q1.qlogo.cn/g?b=qq&nk=%s&s=640", m[1]),
+				UpstreamName: "qq_large",
+			},
+		}
 	}
 
 	// 3) 32 位 MD5 hex（原生 hash）→ WeAvatar 主，Gravatar 备
@@ -874,4 +927,9 @@ func avatarSize(q url.Values) string {
 		n = 2048
 	}
 	return strconv.Itoa(n)
+}
+
+func md5Hex(s string) string {
+	sum := md5.Sum([]byte(s))
+	return hex.EncodeToString(sum[:])
 }

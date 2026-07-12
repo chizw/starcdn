@@ -1,12 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Alert } from '../../../components/ui/alert';
-import { Button } from '../../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
 
 interface PasskeyItem {
   id: number;
@@ -30,6 +24,16 @@ function arrayBufferToBase64Url(buffer: ArrayBuffer): string {
     binary += String.fromCharCode(bytes[i]);
   }
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+async function readJSONResponse(res: Response) {
+  const text = await res.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text };
+  }
 }
 
 export default function SettingsPage() {
@@ -137,26 +141,31 @@ export default function SettingsPage() {
     setRegError('');
     setRegLoading(true);
     try {
-      const beginRes = await fetch('/admin/api/proxy/passkey/register/begin', {
+      const beginRes = await fetch('/admin/api/passkey/register/begin', {
         credentials: 'include',
       });
-      const creation = await beginRes.json();
+      const creation = await readJSONResponse(beginRes);
       if (!beginRes.ok) {
         setRegError(creation.error || '注册初始化失败');
         return;
       }
+      const options = creation.publicKey || creation;
+      if (!options.challenge || !options.user?.id) {
+        setRegError('PASSKEY 注册初始化数据无效');
+        return;
+      }
 
       const publicKey = {
-        rp: creation.publicKey?.rp,
+        rp: options.rp,
         user: {
-          ...creation.publicKey?.user,
-          id: base64UrlToArrayBuffer(creation.publicKey?.user?.id),
+          ...options.user,
+          id: base64UrlToArrayBuffer(options.user.id),
         },
-        challenge: base64UrlToArrayBuffer(creation.publicKey?.challenge),
-        pubKeyCredParams: creation.publicKey?.pubKeyCredParams,
-        authenticatorSelection: creation.publicKey?.authenticatorSelection,
-        attestation: creation.publicKey?.attestation,
-        timeout: creation.publicKey?.timeout,
+        challenge: base64UrlToArrayBuffer(options.challenge),
+        pubKeyCredParams: options.pubKeyCredParams,
+        authenticatorSelection: options.authenticatorSelection,
+        attestation: options.attestation,
+        timeout: options.timeout,
       };
 
       const cred = await navigator.credentials.create({ publicKey });
@@ -181,7 +190,7 @@ export default function SettingsPage() {
           },
         }),
       });
-      const data = await finishRes.json();
+      const data = await readJSONResponse(finishRes);
       if (finishRes.ok) {
         fetchPasskeys();
       } else {
@@ -195,84 +204,114 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">设置</h1>
-        <p className="mt-2 text-sm text-zinc-500">管理账号密码和 PASSKEY 登录凭据。</p>
+    <div>
+      <div className="admin-page-header">
+        <div>
+          <h1 className="admin-page-title">设置</h1>
+          <p className="admin-page-desc">管理账号密码与 PASSKEY 登录凭据。</p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>修改密码</CardTitle>
-          <CardDescription>保存后会回到登录页重新认证。</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-5 space-y-3">
-            {pwdError && <Alert variant="destructive">{pwdError}</Alert>}
-            {pwdSuccess && <Alert variant="success">{pwdSuccess}</Alert>}
-          </div>
-          <form onSubmit={handleChangePassword} className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="oldPassword">当前密码</Label>
-              <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required autoComplete="current-password" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">新密码</Label>
-              <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required autoComplete="new-password" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">确认新密码</Label>
-              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required autoComplete="new-password" />
-            </div>
-            <div className="md:col-span-3">
-              <Button type="submit" disabled={pwdLoading}>{pwdLoading ? '保存中...' : '修改密码'}</Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+      <div className="admin-card">
+        <div className="admin-card-header">
           <div>
-            <CardTitle>PASSKEY 管理</CardTitle>
-            <CardDescription>使用平台认证器提升控制台登录安全性。</CardDescription>
+            <h2 className="admin-card-title">修改密码</h2>
+            <p className="admin-card-desc">保存后会回到登录页重新认证。</p>
           </div>
-          <Button type="button" variant="outline" onClick={handleRegisterPasskey} disabled={regLoading}>{regLoading ? '注册中...' : '新增 PASSKEY'}</Button>
-        </CardHeader>
-        <CardContent>
-          {regError && <Alert variant="destructive" className="mb-5">{regError}</Alert>}
-          {loading ? (
-            <div className="flex justify-center py-10">
-              <div className="loading-spinner" />
+        </div>
+        <div className="admin-card-body">
+          {pwdError && <div className="admin-alert" role="alert">{pwdError}</div>}
+          {pwdSuccess && <div className="admin-alert is-success" role="status">{pwdSuccess}</div>}
+          <form className="admin-form-grid" onSubmit={handleChangePassword} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+            <div className="admin-field" style={{ marginBottom: 0 }}>
+              <label className="admin-label" htmlFor="oldPassword">当前密码</label>
+              <input
+                id="oldPassword"
+                type="password"
+                className="admin-input"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
             </div>
+            <div className="admin-field" style={{ marginBottom: 0 }}>
+              <label className="admin-label" htmlFor="newPassword">新密码</label>
+              <input
+                id="newPassword"
+                type="password"
+                className="admin-input"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="admin-field" style={{ marginBottom: 0 }}>
+              <label className="admin-label" htmlFor="confirmPassword">确认新密码</label>
+              <input
+                id="confirmPassword"
+                type="password"
+                className="admin-input"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+              />
+            </div>
+            <button type="submit" className="admin-btn" disabled={pwdLoading}>
+              {pwdLoading ? '保存中…' : '修改密码'}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <div>
+            <h2 className="admin-card-title">PASSKEY 管理</h2>
+            <p className="admin-card-desc">使用平台认证器提升控制台登录安全性。</p>
+          </div>
+          <button type="button" className="admin-btn is-outline" onClick={handleRegisterPasskey} disabled={regLoading}>
+            {regLoading ? '注册中…' : '新增 PASSKEY'}
+          </button>
+        </div>
+        <div className="admin-card-body">
+          {regError && <div className="admin-alert" role="alert">{regError}</div>}
+          {loading ? (
+            <div className="admin-loading"><span className="admin-loading-dot" /></div>
           ) : error ? (
-            <p className="py-10 text-center text-sm text-zinc-500">{error}</p>
+            <div className="admin-empty">{error}</div>
           ) : passkeys.length === 0 ? (
-            <p className="py-10 text-center text-sm text-zinc-500">暂无 PASSKEY</p>
+            <div className="admin-empty">暂无 PASSKEY</div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-zinc-200">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>编号</TableHead>
-                    <TableHead className="w-[120px]">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+            <div style={{ overflowX: 'auto', borderRadius: 14, border: '1px solid var(--admin-border)' }}>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>编号</th>
+                    <th>注册时间</th>
+                    <th style={{ width: 120 }}>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {passkeys.map((pk) => (
-                    <TableRow key={pk.id}>
-                      <TableCell className="font-medium text-zinc-950">PASSKEY #{pk.id + 1}</TableCell>
-                      <TableCell>
-                        <Button type="button" variant="destructive" size="sm" onClick={() => handleDeletePasskey(pk.id)}>删除</Button>
-                      </TableCell>
-                    </TableRow>
+                    <tr key={pk.id}>
+                      <td style={{ fontWeight: 600 }}>PASSKEY #{pk.id + 1}</td>
+                      <td style={{ color: 'var(--admin-text-soft)', fontSize: 12 }}>
+                        {pk.created_at ? new Date(pk.created_at).toLocaleString('zh-CN') : '--'}
+                      </td>
+                      <td>
+                        <button type="button" className="admin-btn is-danger" onClick={() => handleDeletePasskey(pk.id)}>删除</button>
+                      </td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
+                </tbody>
+              </table>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

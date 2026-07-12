@@ -2,6 +2,7 @@ import type { NextConfig } from 'next';
 import { PHASE_DEVELOPMENT_SERVER } from 'next/constants';
 
 const backendUrl = process.env.STARCDN_BACKEND_URL ?? 'http://127.0.0.1:2606';
+const backendProxyRoutes = ['/api', '/admin/api', '/npm', '/gh', '/ajax/libs', '/avatar'];
 
 const createNextConfig = (phase: string): NextConfig => ({
   ...(phase === PHASE_DEVELOPMENT_SERVER ? {} : { output: 'export' as const }),
@@ -9,16 +10,10 @@ const createNextConfig = (phase: string): NextConfig => ({
   ...(phase === PHASE_DEVELOPMENT_SERVER
     ? {
         async rewrites() {
-          return [
-            {
-              source: '/api/:path*/',
-              destination: `${backendUrl}/api/:path*`,
-            },
-            {
-              source: '/admin/api/:path*/',
-              destination: `${backendUrl}/admin/api/:path*`,
-            },
-          ];
+          return backendProxyRoutes.map((route) => ({
+            source: `${route}/:path*`,
+            destination: `${backendUrl}${route}/:path*`,
+          }));
         },
       }
     : {}),
@@ -26,7 +21,6 @@ const createNextConfig = (phase: string): NextConfig => ({
   images: {
     unoptimized: true,
   },
-  trailingSlash: true,
 });
 
 export default createNextConfig;
