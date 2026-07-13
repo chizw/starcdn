@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -11,29 +10,27 @@ const navItems = [
   { label: '设置', href: '/admin/settings' },
 ];
 
-function isTokenValid(): boolean {
-  try {
-    const match = document.cookie.split('; ').find((row) => row.startsWith('admin_token='));
-    if (!match) return false;
-    const token = match.split('=')[1];
-    const parts = token.split('.');
-    if (parts.length !== 3) return false;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    if (payload.exp && payload.exp * 1000 < Date.now()) return false;
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [authed, setAuthed] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setAuthed(isTokenValid());
-    setReady(true);
+    let cancelled = false;
+    async function checkSession() {
+      try {
+        const res = await fetch('/admin/api/session', { cache: 'no-store', credentials: 'include' });
+        if (!cancelled) setAuthed(res.ok);
+      } catch {
+        if (!cancelled) setAuthed(false);
+      } finally {
+        if (!cancelled) setReady(true);
+      }
+    }
+    checkSession();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

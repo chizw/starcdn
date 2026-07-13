@@ -4,8 +4,6 @@ node_modules/
 out/
 dist/
 build/
-.vercel/
-.netlify/
 
 .env
 .env.*
@@ -36,4 +34,4 @@ coverage/
 .cache/
 
 .data/
-starcdn.exe
+target/

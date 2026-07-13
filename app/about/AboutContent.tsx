@@ -419,7 +419,7 @@ export default function AboutContent() {
             </svg>
           </div>
           <div className="tech-tags">
-            {['EdgeOne', '腾讯云 COS', 'Nginx', 'Go', 'Python', 'React', '多级缓存', '智能调度', 'HTTPS/TLS', 'IPv6', 'API Gateway'].map((tag) => (
+            {['EdgeOne', '腾讯云 COS', 'Nginx', 'Rust', 'Python', 'React', '多级缓存', '智能调度', 'HTTPS/TLS', 'IPv6', 'API Gateway'].map((tag) => (
               <span key={tag} className="tech-tag">{tag}</span>
             ))}
           </div>
