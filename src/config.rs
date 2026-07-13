@@ -47,14 +47,24 @@ impl Config {
     pub fn from_env() -> Self {
         Self {
             addr: env("STARCDN_ADDR", ":2606"),
-            static_dir: std::env::var("STARCDN_STATIC_DIR").ok().filter(|value| !value.is_empty()),
+            static_dir: std::env::var("STARCDN_STATIC_DIR")
+                .ok()
+                .filter(|value| !value.is_empty()),
             cache_dir: env("STARCDN_CACHE_DIR", ".cache/starcdn"),
-            cache_ttl: std::env::var("STARCDN_CACHE_TTL").ok().and_then(|value| parse_duration(&value)).unwrap_or(Duration::from_secs(600)),
+            cache_ttl: std::env::var("STARCDN_CACHE_TTL")
+                .ok()
+                .and_then(|value| parse_duration(&value))
+                .unwrap_or(Duration::from_secs(600)),
             db_path: env("STARCDN_DB_PATH", ".data/starcdn.db"),
             admin_user: env("STARCDN_ADMIN_USER", "admin"),
             admin_pass: env("STARCDN_ADMIN_PASS", "admin123"),
-            jwt_secret: env("STARCDN_JWT_SECRET", "starcdn-rust-default-jwt-secret-change-me"),
-            flush_token: std::env::var("STARCDN_FLUSH_TOKEN").ok().filter(|value| !value.is_empty()),
+            jwt_secret: env(
+                "STARCDN_JWT_SECRET",
+                "starcdn-rust-default-jwt-secret-change-me",
+            ),
+            flush_token: std::env::var("STARCDN_FLUSH_TOKEN")
+                .ok()
+                .filter(|value| !value.is_empty()),
             max_concurrency: usize_env("STARCDN_MAX_CONCURRENCY", 4096),
             max_upstream_concurrency: usize_env("STARCDN_MAX_UPSTREAM_CONCURRENCY", 512),
             db_reset: bool_env("STARCDN_DB_RESET", false),
@@ -63,13 +73,22 @@ impl Config {
 }
 
 fn env(key: &str, fallback: &str) -> String {
-    std::env::var(key).ok().filter(|value| !value.is_empty()).unwrap_or_else(|| fallback.to_string())
+    std::env::var(key)
+        .ok()
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| fallback.to_string())
 }
 
 fn usize_env(key: &str, fallback: usize) -> usize {
-    std::env::var(key).ok().and_then(|value| value.parse().ok()).unwrap_or(fallback)
+    std::env::var(key)
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(fallback)
 }
 
 fn bool_env(key: &str, fallback: bool) -> bool {
-    std::env::var(key).ok().map(|value| matches!(value.as_str(), "1" | "true" | "TRUE" | "yes" | "YES")).unwrap_or(fallback)
+    std::env::var(key)
+        .ok()
+        .map(|value| matches!(value.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
+        .unwrap_or(fallback)
 }

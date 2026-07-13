@@ -25,11 +25,20 @@ impl WafEngine {
     }
 
     pub async fn is_banned(&self, request_path: &str) -> bool {
-        let Ok(rows) = sqlx::query("SELECT pattern, mode FROM ban_rules WHERE enabled = 1").fetch_all(self.db.pool()).await else { return false };
+        let Ok(rows) = sqlx::query("SELECT pattern, mode FROM ban_rules WHERE enabled = 1")
+            .fetch_all(self.db.pool())
+            .await
+        else {
+            return false;
+        };
         rows.into_iter().any(|row| {
             let pattern: String = row.get("pattern");
             let mode: String = row.get("mode");
-            WafRule { pattern, mode: parse_mode(&mode) }.matches(request_path)
+            WafRule {
+                pattern,
+                mode: parse_mode(&mode),
+            }
+            .matches(request_path)
         })
     }
 }
@@ -59,10 +68,17 @@ impl WafRule {
             WafMode::Suffix => request_path.ends_with(&self.pattern),
             WafMode::Ext => self.pattern.split(',').any(|ext| {
                 let ext = ext.trim().trim_start_matches('.').to_ascii_lowercase();
-                !ext.is_empty() && request_path.to_ascii_lowercase().ends_with(&format!(".{}", ext))
+                !ext.is_empty()
+                    && request_path
+                        .to_ascii_lowercase()
+                        .ends_with(&format!(".{}", ext))
             }),
-            WafMode::Glob => matcher(&self.pattern).map(|m| m.is_match(request_path)).unwrap_or(false),
-            WafMode::Regex => Regex::new(&self.pattern).map(|re| re.is_match(request_path)).unwrap_or(false),
+            WafMode::Glob => matcher(&self.pattern)
+                .map(|m| m.is_match(request_path))
+                .unwrap_or(false),
+            WafMode::Regex => Regex::new(&self.pattern)
+                .map(|re| re.is_match(request_path))
+                .unwrap_or(false),
         }
     }
 }

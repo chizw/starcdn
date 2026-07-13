@@ -1,6 +1,11 @@
 use std::{collections::BTreeMap, sync::Arc};
 
-use axum::{body::Body, extract::{Path, State}, http::{header, HeaderMap, HeaderValue, Method, Response, StatusCode, Uri}, response::IntoResponse};
+use axum::{
+    body::Body,
+    extract::{Path, State},
+    http::{header, HeaderMap, HeaderValue, Method, Response, StatusCode, Uri},
+    response::IntoResponse,
+};
 use tokio::sync::Semaphore;
 
 use crate::{app::AppState, cache::cache_key};
@@ -12,11 +17,18 @@ pub struct Target {
     pub url: String,
 }
 
-pub fn sanitize_rel_path(prefix: &str, request_path: &str, strict_single_segment: bool) -> Result<String, String> {
+pub fn sanitize_rel_path(
+    prefix: &str,
+    request_path: &str,
+    strict_single_segment: bool,
+) -> Result<String, String> {
     if !request_path.starts_with(prefix) {
         return Err("invalid route".to_string());
     }
-    let mut rel = request_path.trim_start_matches(prefix).trim_end_matches('/').to_string();
+    let mut rel = request_path
+        .trim_start_matches(prefix)
+        .trim_end_matches('/')
+        .to_string();
     if rel.is_empty() || rel.contains('\0') || rel.contains("..") || rel.starts_with('/') {
         return Err("invalid resource path".to_string());
     }
@@ -109,17 +121,38 @@ pub fn targets_for(prefix: &str, rel: &str, query: &[(String, String)]) -> Vec<T
     };
     match prefix {
         "npm" => vec![
-            Target { route_name: "npm".to_string(), upstream_name: "unpkg".to_string(), url: with_query(format!("https://unpkg.com/{}", rel)) },
-            Target { route_name: "npm".to_string(), upstream_name: "jsdelivr".to_string(), url: with_query(format!("https://cdn.jsdelivr.net/npm/{}", rel)) },
+            Target {
+                route_name: "npm".to_string(),
+                upstream_name: "unpkg".to_string(),
+                url: with_query(format!("https://unpkg.com/{}", rel)),
+            },
+            Target {
+                route_name: "npm".to_string(),
+                upstream_name: "jsdelivr".to_string(),
+                url: with_query(format!("https://cdn.jsdelivr.net/npm/{}", rel)),
+            },
         ],
-        "gh" => vec![Target { route_name: "gh".to_string(), upstream_name: "jsdelivr".to_string(), url: with_query(format!("https://cdn.jsdelivr.net/gh/{}", rel)) }],
-        "ajax" => vec![Target { route_name: "cdnjs".to_string(), upstream_name: "cdnjs".to_string(), url: with_query(format!("https://cdnjs.cloudflare.com/ajax/libs/{}", rel)) }],
+        "gh" => vec![Target {
+            route_name: "gh".to_string(),
+            upstream_name: "jsdelivr".to_string(),
+            url: with_query(format!("https://cdn.jsdelivr.net/gh/{}", rel)),
+        }],
+        "ajax" => vec![Target {
+            route_name: "cdnjs".to_string(),
+            upstream_name: "cdnjs".to_string(),
+            url: with_query(format!("https://cdnjs.cloudflare.com/ajax/libs/{}", rel)),
+        }],
         "cnb" => vec![cnb_target(rel, query)],
         _ => vec![],
     }
 }
 
-pub async fn handle_proxy(State(state): State<AppState>, method: Method, uri: Uri, headers: HeaderMap) -> impl IntoResponse {
+pub async fn handle_proxy(
+    State(state): State<AppState>,
+    method: Method,
+    uri: Uri,
+    headers: HeaderMap,
+) -> impl IntoResponse {
     if method != Method::GET && method != Method::HEAD {
         return StatusCode::METHOD_NOT_ALLOWED.into_response();
     }
@@ -138,7 +171,11 @@ pub async fn handle_proxy(State(state): State<AppState>, method: Method, uri: Ur
     } else {
         return StatusCode::NOT_FOUND.into_response();
     };
-    let rel = match sanitize_rel_path(route_prefix, &format_path_for_route(&path, route_prefix), strict) {
+    let rel = match sanitize_rel_path(
+        route_prefix,
+        &format_path_for_route(&path, route_prefix),
+        strict,
+    ) {
         Ok(rel) => rel,
         Err(err) => return (StatusCode::BAD_REQUEST, err).into_response(),
     };
@@ -147,7 +184,13 @@ pub async fn handle_proxy(State(state): State<AppState>, method: Method, uri: Ur
     proxy_targets(state, method == Method::HEAD, &path, headers, targets).await
 }
 
-pub async fn handle_avatar(State(state): State<AppState>, Path(param): Path<String>, method: Method, uri: Uri, headers: HeaderMap) -> impl IntoResponse {
+pub async fn handle_avatar(
+    State(state): State<AppState>,
+    Path(param): Path<String>,
+    method: Method,
+    uri: Uri,
+    headers: HeaderMap,
+) -> impl IntoResponse {
     if method != Method::GET && method != Method::HEAD {
         return StatusCode::METHOD_NOT_ALLOWED.into_response();
     }
@@ -159,52 +202,126 @@ pub async fn handle_avatar(State(state): State<AppState>, Path(param): Path<Stri
         return (StatusCode::BAD_REQUEST, "invalid avatar path").into_response();
     }
     let query = parse_query(uri.query().unwrap_or_default());
-    let size = query.iter().find(|(key, _)| key == "s").or_else(|| query.iter().find(|(key, _)| key == "size")).and_then(|(_, value)| value.parse::<u16>().ok()).unwrap_or(80).clamp(1, 2048);
+    let size = query
+        .iter()
+        .find(|(key, _)| key == "s")
+        .or_else(|| query.iter().find(|(key, _)| key == "size"))
+        .and_then(|(_, value)| value.parse::<u16>().ok())
+        .unwrap_or(80)
+        .clamp(1, 2048);
     let lower = param.trim().to_ascii_lowercase();
     let hash = if lower.chars().all(|ch| ch.is_ascii_digit()) && (4..=12).contains(&lower.len()) {
         let url = format!("https://q1.qlogo.cn/g?b=qq&nk={}&s={}", lower, size);
-        return proxy_targets(state, method == Method::HEAD, &request_path, headers, vec![Target { route_name: "avatar".to_string(), upstream_name: "qlogo".to_string(), url }]).await;
-    } else if let Some(qq) = lower.strip_suffix("@qq.com").filter(|value| value.chars().all(|ch| ch.is_ascii_digit())) {
+        return proxy_targets(
+            state,
+            method == Method::HEAD,
+            &request_path,
+            headers,
+            vec![Target {
+                route_name: "avatar".to_string(),
+                upstream_name: "qlogo".to_string(),
+                url,
+            }],
+        )
+        .await;
+    } else if let Some(qq) = lower
+        .strip_suffix("@qq.com")
+        .filter(|value| value.chars().all(|ch| ch.is_ascii_digit()))
+    {
         let url = format!("https://q1.qlogo.cn/g?b=qq&nk={}&s={}", qq, size);
-        return proxy_targets(state, method == Method::HEAD, &request_path, headers, vec![Target { route_name: "avatar".to_string(), upstream_name: "qlogo".to_string(), url }]).await;
+        return proxy_targets(
+            state,
+            method == Method::HEAD,
+            &request_path,
+            headers,
+            vec![Target {
+                route_name: "avatar".to_string(),
+                upstream_name: "qlogo".to_string(),
+                url,
+            }],
+        )
+        .await;
     } else if lower.len() == 32 && lower.chars().all(|ch| ch.is_ascii_hexdigit()) {
         lower
     } else {
         format!("{:x}", md5::compute(lower.as_bytes()))
     };
     let targets = vec![
-        Target { route_name: "avatar".to_string(), upstream_name: "weavatar".to_string(), url: format!("https://weavatar.com/avatar/{}?s={}", hash, size) },
-        Target { route_name: "avatar".to_string(), upstream_name: "gravatar".to_string(), url: format!("https://secure.gravatar.com/avatar/{}?s={}", hash, size) },
+        Target {
+            route_name: "avatar".to_string(),
+            upstream_name: "weavatar".to_string(),
+            url: format!("https://weavatar.com/avatar/{}?s={}", hash, size),
+        },
+        Target {
+            route_name: "avatar".to_string(),
+            upstream_name: "gravatar".to_string(),
+            url: format!("https://secure.gravatar.com/avatar/{}?s={}", hash, size),
+        },
     ];
-    proxy_targets(state, method == Method::HEAD, &request_path, headers, targets).await
+    proxy_targets(
+        state,
+        method == Method::HEAD,
+        &request_path,
+        headers,
+        targets,
+    )
+    .await
 }
 
-async fn proxy_targets(state: AppState, head: bool, request_path: &str, headers: HeaderMap, targets: Vec<Target>) -> axum::response::Response {
+async fn proxy_targets(
+    state: AppState,
+    head: bool,
+    request_path: &str,
+    headers: HeaderMap,
+    targets: Vec<Target>,
+) -> axum::response::Response {
     let Ok(_permit) = state.upstream_semaphore.clone().acquire_owned().await else {
         return StatusCode::SERVICE_UNAVAILABLE.into_response();
     };
     for target in targets {
         let key = cache_key(&target.upstream_name, &target.url);
         if let Some(entry) = state.cache.get(&key).await {
-            state.db.record_traffic(request_path, entry.body.len() as i64).await;
+            state
+                .db
+                .record_traffic(request_path, entry.body.len() as i64)
+                .await;
             return state.cache.response_from_entry(entry, head).into_response();
         }
         let lock = state.cache.lock_for(&key);
         let _guard = lock.lock().await;
         if let Some(entry) = state.cache.get(&key).await {
-            state.db.record_traffic(request_path, entry.body.len() as i64).await;
+            state
+                .db
+                .record_traffic(request_path, entry.body.len() as i64)
+                .await;
             return state.cache.response_from_entry(entry, head).into_response();
         }
-        if let Some(response) = fetch_one(&state, head, request_path, &headers, &target, &key).await {
+        if let Some(response) = fetch_one(&state, head, request_path, &headers, &target, &key).await
+        {
             return response;
         }
     }
     StatusCode::BAD_GATEWAY.into_response()
 }
 
-async fn fetch_one(state: &AppState, head: bool, request_path: &str, headers: &HeaderMap, target: &Target, key: &str) -> Option<axum::response::Response> {
-    let mut builder = state.client.get(&target.url).header(header::USER_AGENT, "StarCDN-RustProxy/1.0");
-    for name in [header::ACCEPT, header::ACCEPT_LANGUAGE, header::IF_NONE_MATCH, header::IF_MODIFIED_SINCE] {
+async fn fetch_one(
+    state: &AppState,
+    head: bool,
+    request_path: &str,
+    headers: &HeaderMap,
+    target: &Target,
+    key: &str,
+) -> Option<axum::response::Response> {
+    let mut builder = state
+        .client
+        .get(&target.url)
+        .header(header::USER_AGENT, "StarCDN-RustProxy/1.0");
+    for name in [
+        header::ACCEPT,
+        header::ACCEPT_LANGUAGE,
+        header::IF_NONE_MATCH,
+        header::IF_MODIFIED_SINCE,
+    ] {
         if let Some(value) = headers.get(&name) {
             builder = builder.header(name, value);
         }
@@ -219,14 +336,30 @@ async fn fetch_one(state: &AppState, head: bool, request_path: &str, headers: &H
         response_headers.insert(name.clone(), value.clone());
     }
     let body = upstream.bytes().await.ok()?.to_vec();
-    response_headers.insert("cache-control", HeaderValue::from_str(&format!("public, max-age={}", state.cache.ttl().as_secs())).ok()?);
+    response_headers.insert(
+        "cache-control",
+        HeaderValue::from_str(&format!("public, max-age={}", state.cache.ttl().as_secs())).ok()?,
+    );
     response_headers.insert("x-starcdn-cache", HeaderValue::from_static("MISS"));
-    response_headers.insert("x-starcdn-upstream", HeaderValue::from_str(&target.upstream_name).ok()?);
+    response_headers.insert(
+        "x-starcdn-upstream",
+        HeaderValue::from_str(&target.upstream_name).ok()?,
+    );
     if status == StatusCode::OK {
-        let _ = state.cache.put(key, status, &response_headers, &target.upstream_name, &body).await;
+        let _ = state
+            .cache
+            .put(key, status, &response_headers, &target.upstream_name, &body)
+            .await;
     }
-    state.db.record_traffic(request_path, body.len() as i64).await;
-    let mut response = Response::new(if head { Body::empty() } else { Body::from(body) });
+    state
+        .db
+        .record_traffic(request_path, body.len() as i64)
+        .await;
+    let mut response = Response::new(if head {
+        Body::empty()
+    } else {
+        Body::from(body)
+    });
     *response.status_mut() = status;
     *response.headers_mut() = response_headers;
     Some(response.into_response())
@@ -236,10 +369,16 @@ fn parse_query(query: &str) -> Vec<(String, String)> {
     if query.is_empty() {
         return Vec::new();
     }
-    query.split('&').filter_map(|part| {
-        let mut split = part.splitn(2, '=');
-        Some((split.next()?.to_string(), split.next().unwrap_or_default().to_string()))
-    }).collect()
+    query
+        .split('&')
+        .filter_map(|part| {
+            let mut split = part.splitn(2, '=');
+            Some((
+                split.next()?.to_string(),
+                split.next().unwrap_or_default().to_string(),
+            ))
+        })
+        .collect()
 }
 
 fn format_path_for_route(path: &str, route_prefix: &str) -> String {

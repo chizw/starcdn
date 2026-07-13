@@ -1,4 +1,8 @@
-use axum::{extract::{Path, Query, State}, http::{HeaderMap, StatusCode}, Json};
+use axum::{
+    extract::{Path, Query, State},
+    http::{HeaderMap, StatusCode},
+    Json,
+};
 use serde::Deserialize;
 
 use crate::{app::AppState, auth::require_auth};
@@ -32,8 +36,14 @@ fn _purge_request_fields(req: &PurgeRequest) -> (Option<&str>, Option<&str>) {
 
 pub async fn public_stats(State(state): State<AppState>) -> Json<serde_json::Value> {
     let stats = state.db.stats(1, 10).await.ok();
-    let total_requests = stats.as_ref().map(|stats| stats.total_requests).unwrap_or_default();
-    let total_bytes = stats.as_ref().map(|stats| stats.total_bytes_sent).unwrap_or_default();
+    let total_requests = stats
+        .as_ref()
+        .map(|stats| stats.total_requests)
+        .unwrap_or_default();
+    let total_bytes = stats
+        .as_ref()
+        .map(|stats| stats.total_bytes_sent)
+        .unwrap_or_default();
     Json(serde_json::json!([
         { "name": "Unpkg", "total_requests": total_requests, "total_bytes": total_bytes, "online": true },
         { "name": "Jsdelivr", "total_requests": 0, "total_bytes": 0, "online": true },
@@ -43,12 +53,20 @@ pub async fn public_stats(State(state): State<AppState>) -> Json<serde_json::Val
     ]))
 }
 
-pub async fn session(State(state): State<AppState>, headers: HeaderMap) -> Result<Json<serde_json::Value>, StatusCode> {
+pub async fn session(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<serde_json::Value>, StatusCode> {
     let claims = require_auth(&headers, &state).await?;
-    Ok(Json(serde_json::json!({ "authenticated": true, "username": claims.username })))
+    Ok(Json(
+        serde_json::json!({ "authenticated": true, "username": claims.username }),
+    ))
 }
 
-pub async fn system(State(state): State<AppState>, headers: HeaderMap) -> Result<Json<serde_json::Value>, StatusCode> {
+pub async fn system(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<serde_json::Value>, StatusCode> {
     let claims = require_auth(&headers, &state).await?;
     Ok(Json(serde_json::json!({
         "authenticated": true,
@@ -60,41 +78,99 @@ pub async fn system(State(state): State<AppState>, headers: HeaderMap) -> Result
     })))
 }
 
-pub async fn admin_stats(State(state): State<AppState>, headers: HeaderMap, Query(query): Query<PageQuery>) -> Result<Json<serde_json::Value>, StatusCode> {
+pub async fn admin_stats(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(query): Query<PageQuery>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
     require_auth(&headers, &state).await?;
-    let stats = state.db.stats(query.page.unwrap_or(1), query.page_size.unwrap_or(20).clamp(1, 100)).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    Ok(Json(serde_json::to_value(stats).unwrap_or_else(|_| serde_json::json!({}))))
+    let stats = state
+        .db
+        .stats(
+            query.page.unwrap_or(1),
+            query.page_size.unwrap_or(20).clamp(1, 100),
+        )
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(Json(
+        serde_json::to_value(stats).unwrap_or_else(|_| serde_json::json!({})),
+    ))
 }
 
-pub async fn list_bans(State(state): State<AppState>, headers: HeaderMap) -> Result<Json<serde_json::Value>, StatusCode> {
+pub async fn list_bans(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<serde_json::Value>, StatusCode> {
     require_auth(&headers, &state).await?;
-    let rules = state.db.list_bans().await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    Ok(Json(serde_json::to_value(rules).unwrap_or_else(|_| serde_json::json!([]))))
+    let rules = state
+        .db
+        .list_bans()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(Json(
+        serde_json::to_value(rules).unwrap_or_else(|_| serde_json::json!([])),
+    ))
 }
 
-pub async fn create_ban(State(state): State<AppState>, headers: HeaderMap, Json(req): Json<CreateBanRequest>) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<serde_json::Value>)> {
-    require_auth(&headers, &state).await.map_err(|status| json_error(status, "unauthorized"))?;
+pub async fn create_ban(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(req): Json<CreateBanRequest>,
+) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<serde_json::Value>)> {
+    require_auth(&headers, &state)
+        .await
+        .map_err(|status| json_error(status, "unauthorized"))?;
     if req.pattern.trim().is_empty() {
         return Err(json_error(StatusCode::BAD_REQUEST, "pattern is required"));
     }
-    let mode = req.mode.unwrap_or_else(|| infer_mode(&req.pattern).to_string());
+    let mode = req
+        .mode
+        .unwrap_or_else(|| infer_mode(&req.pattern).to_string());
     let reason = req.reason.unwrap_or_default();
-    let rule = state.db.create_ban(req.pattern.trim(), &mode, &reason).await.map_err(|_| json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to create ban rule"))?;
-    Ok((StatusCode::CREATED, Json(serde_json::to_value(rule).unwrap_or_else(|_| serde_json::json!({})))))
+    let rule = state
+        .db
+        .create_ban(req.pattern.trim(), &mode, &reason)
+        .await
+        .map_err(|_| {
+            json_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "failed to create ban rule",
+            )
+        })?;
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::to_value(rule).unwrap_or_else(|_| serde_json::json!({}))),
+    ))
 }
 
-pub async fn delete_ban(State(state): State<AppState>, headers: HeaderMap, Path(id): Path<i64>) -> Result<Json<serde_json::Value>, StatusCode> {
+pub async fn delete_ban(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(id): Path<i64>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
     require_auth(&headers, &state).await?;
-    state.db.delete_ban(id).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    state
+        .db
+        .delete_ban(id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(serde_json::json!({ "message": "ban rule deleted" })))
 }
 
-pub async fn purge_cache(State(state): State<AppState>, headers: HeaderMap, Json(req): Json<PurgeRequest>) -> Result<Json<serde_json::Value>, StatusCode> {
+pub async fn purge_cache(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(req): Json<PurgeRequest>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
     require_auth(&headers, &state).await?;
     let mode = req.mode.unwrap_or_else(|| "all".to_string());
     let target = req.target.unwrap_or_else(|| "*".to_string());
     // 首版统一全量清理；mode/target 进入响应，便于后续扩展按前缀/URL 刷新。
-    let deleted_files = state.cache.purge_all().await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let deleted_files = state
+        .cache
+        .purge_all()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(serde_json::json!({
         "message": "cache purged",
         "mode": mode,

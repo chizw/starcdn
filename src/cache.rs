@@ -1,6 +1,13 @@
-use std::{path::{Path, PathBuf}, sync::Arc, time::{Duration, SystemTime, UNIX_EPOCH}};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 
-use axum::{body::Body, http::{HeaderMap, HeaderName, HeaderValue, Response, StatusCode}};
+use axum::{
+    body::Body,
+    http::{HeaderMap, HeaderName, HeaderValue, Response, StatusCode},
+};
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -41,7 +48,11 @@ pub struct CacheEntry {
 impl CacheStore {
     pub async fn new(dir: impl AsRef<Path>, ttl: Duration) -> Result<Self, std::io::Error> {
         tokio::fs::create_dir_all(dir.as_ref()).await?;
-        Ok(Self { dir: dir.as_ref().to_path_buf(), ttl, locks: Arc::new(DashMap::new()) })
+        Ok(Self {
+            dir: dir.as_ref().to_path_buf(),
+            ttl,
+            locks: Arc::new(DashMap::new()),
+        })
     }
 
     pub fn ttl(&self) -> Duration {
@@ -49,7 +60,10 @@ impl CacheStore {
     }
 
     pub fn lock_for(&self, key: &str) -> Arc<Mutex<()>> {
-        self.locks.entry(key.to_string()).or_insert_with(|| Arc::new(Mutex::new(()))).clone()
+        self.locks
+            .entry(key.to_string())
+            .or_insert_with(|| Arc::new(Mutex::new(())))
+            .clone()
     }
 
     pub async fn get(&self, key: &str) -> Option<CacheEntry> {
@@ -65,7 +79,14 @@ impl CacheStore {
         Some(CacheEntry { meta, body })
     }
 
-    pub async fn put(&self, key: &str, status: StatusCode, headers: &HeaderMap, upstream: &str, body: &[u8]) -> Result<(), std::io::Error> {
+    pub async fn put(
+        &self,
+        key: &str,
+        status: StatusCode,
+        headers: &HeaderMap,
+        upstream: &str,
+        body: &[u8],
+    ) -> Result<(), std::io::Error> {
         let created_at = now_ts();
         let mut clean_headers = Vec::new();
         for (name, value) in headers {
@@ -85,7 +106,11 @@ impl CacheStore {
             content_hash: hex::encode(hasher.finalize()),
         };
         self.atomic_write(&self.body_path(key), body).await?;
-        self.atomic_write(&self.meta_path(key), serde_json::to_vec(&meta).unwrap_or_default().as_slice()).await
+        self.atomic_write(
+            &self.meta_path(key),
+            serde_json::to_vec(&meta).unwrap_or_default().as_slice(),
+        )
+        .await
     }
 
     pub async fn delete(&self, key: &str) -> Result<(), std::io::Error> {
@@ -108,13 +133,19 @@ impl CacheStore {
     }
 
     pub async fn sweep_expired(&self) {
-        let Ok(mut entries) = tokio::fs::read_dir(&self.dir).await else { return };
+        let Ok(mut entries) = tokio::fs::read_dir(&self.dir).await else {
+            return;
+        };
         while let Ok(Some(entry)) = entries.next_entry().await {
             let path = entry.path();
             if path.extension().and_then(|ext| ext.to_str()) != Some("json") {
                 continue;
             }
-            let remove = match tokio::fs::read(&path).await.ok().and_then(|bytes| serde_json::from_slice::<CacheMeta>(&bytes).ok()) {
+            let remove = match tokio::fs::read(&path)
+                .await
+                .ok()
+                .and_then(|bytes| serde_json::from_slice::<CacheMeta>(&bytes).ok())
+            {
                 Some(meta) => now_ts() >= meta.expires_at,
                 None => true,
             };
@@ -126,15 +157,27 @@ impl CacheStore {
     }
 
     pub fn response_from_entry(&self, entry: CacheEntry, head: bool) -> Response<Body> {
-        let mut response = Response::new(if head { Body::empty() } else { Body::from(entry.body) });
+        let mut response = Response::new(if head {
+            Body::empty()
+        } else {
+            Body::from(entry.body)
+        });
         *response.status_mut() = StatusCode::from_u16(entry.meta.status).unwrap_or(StatusCode::OK);
         for (name, value) in entry.meta.headers {
-            if let (Ok(name), Ok(value)) = (HeaderName::try_from(name), HeaderValue::from_str(&value)) {
+            if let (Ok(name), Ok(value)) =
+                (HeaderName::try_from(name), HeaderValue::from_str(&value))
+            {
                 response.headers_mut().insert(name, value);
             }
         }
-        response.headers_mut().insert("x-starcdn-cache", HeaderValue::from_static("HIT"));
-        response.headers_mut().insert("age", HeaderValue::from_str(&(now_ts() - entry.meta.created_at).max(0).to_string()).unwrap_or_else(|_| HeaderValue::from_static("0")));
+        response
+            .headers_mut()
+            .insert("x-starcdn-cache", HeaderValue::from_static("HIT"));
+        response.headers_mut().insert(
+            "age",
+            HeaderValue::from_str(&(now_ts() - entry.meta.created_at).max(0).to_string())
+                .unwrap_or_else(|_| HeaderValue::from_static("0")),
+        );
         response
     }
 
@@ -154,5 +197,8 @@ impl CacheStore {
 }
 
 pub fn now_ts() -> i64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs() as i64
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs() as i64
 }

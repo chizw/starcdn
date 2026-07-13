@@ -1,9 +1,15 @@
 use std::{sync::Arc, time::Duration};
 
-use axum::{routing::{delete, get, post}, Router};
+use axum::{
+    routing::{delete, get, post},
+    Router,
+};
 use reqwest::Client;
 use tokio::sync::Semaphore;
-use tower_http::{services::{ServeDir, ServeFile}, trace::TraceLayer};
+use tower_http::{
+    services::{ServeDir, ServeFile},
+    trace::TraceLayer,
+};
 
 use crate::{admin, auth, cache::CacheStore, config::Config, db::Database, proxy, waf::WafEngine};
 
@@ -52,18 +58,39 @@ pub async fn build_app(config: Config) -> Result<Router, Box<dyn std::error::Err
         .route("/admin/api/session", get(admin::session))
         .route("/admin/api/system", get(admin::system))
         .route("/admin/api/stats", get(admin::admin_stats))
-        .route("/admin/api/ban", get(admin::list_bans).post(admin::create_ban))
+        .route(
+            "/admin/api/ban",
+            get(admin::list_bans).post(admin::create_ban),
+        )
         .route("/admin/api/ban/:id", delete(admin::delete_ban))
         .route("/admin/api/cache/purge", post(admin::purge_cache))
-        .route("/avatar/:param", get(proxy::handle_avatar).head(proxy::handle_avatar))
-        .route("/npm/*path", get(proxy::handle_proxy).head(proxy::handle_proxy))
-        .route("/gh/*path", get(proxy::handle_proxy).head(proxy::handle_proxy))
-        .route("/ajax/libs/*path", get(proxy::handle_proxy).head(proxy::handle_proxy))
-        .route("/cnb/*path", get(proxy::handle_proxy).head(proxy::handle_proxy))
+        .route(
+            "/avatar/:param",
+            get(proxy::handle_avatar).head(proxy::handle_avatar),
+        )
+        .route(
+            "/npm/*path",
+            get(proxy::handle_proxy).head(proxy::handle_proxy),
+        )
+        .route(
+            "/gh/*path",
+            get(proxy::handle_proxy).head(proxy::handle_proxy),
+        )
+        .route(
+            "/ajax/libs/*path",
+            get(proxy::handle_proxy).head(proxy::handle_proxy),
+        )
+        .route(
+            "/cnb/*path",
+            get(proxy::handle_proxy).head(proxy::handle_proxy),
+        )
         .layer(TraceLayer::new_for_http())
         .with_state(state.clone());
     if let Some(static_dir) = &state.config.static_dir {
-        router = router.fallback_service(ServeDir::new(static_dir).not_found_service(ServeFile::new(format!("{}/404.html", static_dir))));
+        router = router.fallback_service(
+            ServeDir::new(static_dir)
+                .not_found_service(ServeFile::new(format!("{}/404.html", static_dir))),
+        );
     }
     Ok(router)
 }

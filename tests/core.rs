@@ -1,6 +1,15 @@
-use std::{sync::{Arc, atomic::{AtomicUsize, Ordering}}, time::Duration};
+use std::{
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+    time::Duration,
+};
 
-use axum::{body::Body, http::{HeaderMap, Request, StatusCode}};
+use axum::{
+    body::Body,
+    http::{HeaderMap, Request, StatusCode},
+};
 use starcdn::{
     app::build_app,
     cache::{cache_key, CacheStore},
@@ -13,7 +22,13 @@ use tower::ServiceExt;
 
 #[test]
 fn maps_cnb_route_to_cnb_cool_upstream() {
-    let target = cnb_target("jsdmirror/home", &[("b".to_string(), "2".to_string()), ("a".to_string(), "1".to_string())]);
+    let target = cnb_target(
+        "jsdmirror/home",
+        &[
+            ("b".to_string(), "2".to_string()),
+            ("a".to_string(), "1".to_string()),
+        ],
+    );
     assert_eq!(target.url, "https://cnb.cool/jsdmirror/home?a=1&b=2");
     assert_eq!(target.route_name, "cnb");
 }
@@ -26,7 +41,10 @@ fn maps_cnb_jsdelivr_style_path_to_git_raw() {
         "https://cnb.cool/jsdmirror/json/-/git/raw/main/third-party-mirrors.json"
     );
 
-    let already_raw = cnb_target("jsdmirror/json/-/git/raw/main/third-party-mirrors.json", &[]);
+    let already_raw = cnb_target(
+        "jsdmirror/json/-/git/raw/main/third-party-mirrors.json",
+        &[],
+    );
     assert_eq!(
         already_raw.url,
         "https://cnb.cool/jsdmirror/json/-/git/raw/main/third-party-mirrors.json"
@@ -43,7 +61,10 @@ fn maps_cnb_jsdelivr_style_path_to_git_raw() {
 fn rejects_traversal_paths_before_proxying() {
     assert!(sanitize_rel_path("/npm/", "/npm/../secret", false).is_err());
     assert!(sanitize_rel_path("/avatar/", "/avatar/user/hash", true).is_err());
-    assert_eq!(sanitize_rel_path("/npm/", "/npm/jquery/dist/index.js", false).unwrap(), "jquery/dist/index.js");
+    assert_eq!(
+        sanitize_rel_path("/npm/", "/npm/jquery/dist/index.js", false).unwrap(),
+        "jquery/dist/index.js"
+    );
 }
 
 #[test]
@@ -57,10 +78,26 @@ fn cache_key_is_stable_and_upstream_sensitive() {
 
 #[test]
 fn waf_supports_ext_glob_prefix_and_regex_modes() {
-    assert!(WafRule { pattern: "exe,zip".to_string(), mode: WafMode::Ext }.matches("/npm/pkg/file.zip"));
-    assert!(WafRule { pattern: "/cnb/private*".to_string(), mode: WafMode::Glob }.matches("/cnb/private/repo"));
-    assert!(WafRule { pattern: "/avatar/".to_string(), mode: WafMode::Prefix }.matches("/avatar/foo"));
-    assert!(WafRule { pattern: r"^/npm/.+\.min\.js$".to_string(), mode: WafMode::Regex }.matches("/npm/jquery/dist/jquery.min.js"));
+    assert!(WafRule {
+        pattern: "exe,zip".to_string(),
+        mode: WafMode::Ext
+    }
+    .matches("/npm/pkg/file.zip"));
+    assert!(WafRule {
+        pattern: "/cnb/private*".to_string(),
+        mode: WafMode::Glob
+    }
+    .matches("/cnb/private/repo"));
+    assert!(WafRule {
+        pattern: "/avatar/".to_string(),
+        mode: WafMode::Prefix
+    }
+    .matches("/avatar/foo"));
+    assert!(WafRule {
+        pattern: r"^/npm/.+\.min\.js$".to_string(),
+        mode: WafMode::Regex
+    }
+    .matches("/npm/jquery/dist/jquery.min.js"));
 }
 
 #[test]
@@ -77,7 +114,11 @@ fn routes_include_expected_upstream_fallbacks() {
     assert_eq!(npm[0].url, "https://unpkg.com/react");
     assert_eq!(npm[1].url, "https://cdn.jsdelivr.net/npm/react");
 
-    let cnb = targets_for("cnb", "jsdmirror/home", &[("ref".to_string(), "main".to_string())]);
+    let cnb = targets_for(
+        "cnb",
+        "jsdmirror/home",
+        &[("ref".to_string(), "main".to_string())],
+    );
     assert_eq!(cnb.len(), 1);
     assert_eq!(cnb[0].url, "https://cnb.cool/jsdmirror/home?ref=main");
 }
@@ -95,12 +136,17 @@ fn waf_mode_parser_defaults_unknown_modes_to_glob() {
 #[tokio::test]
 async fn cache_store_writes_reads_and_purges_entries() {
     let temp = tempfile::tempdir().unwrap();
-    let store = CacheStore::new(temp.path(), Duration::from_secs(60)).await.unwrap();
+    let store = CacheStore::new(temp.path(), Duration::from_secs(60))
+        .await
+        .unwrap();
     let key = cache_key("cnb", "https://cnb.cool/jsdmirror/home");
     let mut headers = HeaderMap::new();
     headers.insert("content-type", "text/plain".parse().unwrap());
 
-    store.put(&key, StatusCode::OK, &headers, "cnb", b"hello").await.unwrap();
+    store
+        .put(&key, StatusCode::OK, &headers, "cnb", b"hello")
+        .await
+        .unwrap();
     let entry = store.get(&key).await.unwrap();
     assert_eq!(entry.body, b"hello");
     assert_eq!(entry.meta.upstream, "cnb");
@@ -114,9 +160,14 @@ async fn cache_store_writes_reads_and_purges_entries() {
 #[tokio::test]
 async fn cache_store_sweeps_expired_entries() {
     let temp = tempfile::tempdir().unwrap();
-    let store = CacheStore::new(temp.path(), Duration::from_secs(1)).await.unwrap();
+    let store = CacheStore::new(temp.path(), Duration::from_secs(1))
+        .await
+        .unwrap();
     let key = cache_key("npm", "https://unpkg.com/react");
-    store.put(&key, StatusCode::OK, &HeaderMap::new(), "unpkg", b"react").await.unwrap();
+    store
+        .put(&key, StatusCode::OK, &HeaderMap::new(), "unpkg", b"react")
+        .await
+        .unwrap();
 
     tokio::time::sleep(Duration::from_millis(1200)).await;
     store.sweep_expired().await;
@@ -137,7 +188,10 @@ async fn database_records_stats_and_ban_rules() {
     assert_eq!(stats.total_bytes_sent, 192);
     assert_eq!(stats.top_urls[0].request_path, "/cnb/jsdmirror/home");
 
-    let rule = db.create_ban("/cnb/private*", "glob", "private repo").await.unwrap();
+    let rule = db
+        .create_ban("/cnb/private*", "glob", "private repo")
+        .await
+        .unwrap();
     assert_eq!(db.list_bans().await.unwrap().len(), 1);
     db.delete_ban(rule.id).await.unwrap();
     assert!(db.list_bans().await.unwrap().is_empty());
@@ -150,11 +204,21 @@ async fn app_blocks_banned_proxy_path_before_upstream_fetch() {
     // 先初始化 schema，再写入规则；后续 build_app 不得再 reset 数据库。
     config.db_reset = true;
     let db = Database::connect(&config).await.unwrap();
-    db.create_ban("/cnb/private*", "glob", "blocked").await.unwrap();
+    db.create_ban("/cnb/private*", "glob", "blocked")
+        .await
+        .unwrap();
     config.db_reset = false;
 
     let app = build_app(config).await.unwrap();
-    let response = app.oneshot(Request::builder().uri("/cnb/private/repo").body(Body::empty()).unwrap()).await.unwrap();
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/cnb/private/repo")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     assert_eq!(response.status(), StatusCode::TEMPORARY_REDIRECT);
     assert_eq!(response.headers().get("location").unwrap(), "/waf");
@@ -163,7 +227,9 @@ async fn app_blocks_banned_proxy_path_before_upstream_fetch() {
 #[tokio::test]
 async fn singleflight_lock_serializes_same_cache_key() {
     let temp = tempfile::tempdir().unwrap();
-    let store = CacheStore::new(temp.path(), Duration::from_secs(60)).await.unwrap();
+    let store = CacheStore::new(temp.path(), Duration::from_secs(60))
+        .await
+        .unwrap();
     let active = Arc::new(AtomicUsize::new(0));
     let max_active = Arc::new(AtomicUsize::new(0));
     let mut handles = Vec::new();
