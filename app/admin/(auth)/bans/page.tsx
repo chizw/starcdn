@@ -38,7 +38,10 @@ export default function BansPage() {
   }, []);
 
   useEffect(() => {
-    fetchRules();
+    const timer = window.setTimeout(() => {
+      fetchRules();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [fetchRules]);
 
   async function handleCreateRule(e: React.FormEvent) {

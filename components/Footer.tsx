@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useT } from '@/i18n';
@@ -63,7 +64,7 @@ export default function Footer() {
       icon: 'https://cos.jsdmirror.com/images/2021/09/10/qq.png',
       href: 'https://qm.qq.com/cgi-bin/qm/qr?k=PWdCZAYnc5G33n8CsXB4swW7CmCa6zMD&jump_from=webapi&authKey=2TBqZa9/Mr1xMqiQZ8+JpuQY/NMH7ZNgMiyvEiaiOTr5wGDhtbcPq9/WtBjPW8ps',
       alt: 'QQ',
-      qr: null,
+      qr: null as string | null,
     },
     {
       icon: 'https://cos.jsdmirror.com/images/2021/09/10/wecom.png',
@@ -81,19 +82,19 @@ export default function Footer() {
       icon: 'https://cos.jsdmirror.com/images/2021/09/10/bilibili.png',
       href: 'https://space.bilibili.com/293201568',
       alt: 'Bilibili',
-      qr: null,
+      qr: null as string | null,
     },
     {
       icon: 'https://cos.jsdmirror.com/images/2021/09/10/github.png',
       href: 'https://github.com/jsdmirror/www.jsdmirror.com',
       alt: 'GitHub',
-      qr: null,
+      qr: null as string | null,
     },
     {
       icon: 'https://cos.jsdmirror.com/images/2021/09/10/cnb.png',
       href: 'https://cnb.cool/jsdmirror',
       alt: 'CNB',
-      qr: null,
+      qr: null as string | null,
     },
   ];
 
@@ -103,10 +104,13 @@ export default function Footer() {
         <div className="footer-content">
           <div className="footer-section footer-brand">
             <div className="footer-brand-logo">
-              <img
+              <Image
                 src="https://cos.jsdmirror.com/2023/08/29/background.png"
                 alt="JSDMirror"
+                width={70}
+                height={70}
                 style={{ width: '70px', height: 'auto' }}
+                unoptimized
               />
             </div>
             <p>{t.footer.brand}</p>
@@ -116,39 +120,39 @@ export default function Footer() {
                 {/* QQ */}
                 <li>
                   <a href={socialLinks[0].href} target="_blank" rel="noopener noreferrer" className="focus-link qq-btn">
-                    <img className="icon" src={socialLinks[0].icon} alt="QQ" />
+                    <Image className="icon" src={socialLinks[0].icon} alt="QQ" width={24} height={24} unoptimized />
                   </a>
                 </li>
                 {/* 企业微信 */}
                 <li>
                   <a className="focus-link wecom-btn" onClick={(e) => e.preventDefault()}>
-                    <img className="icon" src={socialLinks[1].icon} alt="企业微信" />
-                    <img className="qr-code wecom-code" src={socialLinks[1].qr!} alt="企业微信二维码" />
+                    <Image className="icon" src={socialLinks[1].icon} alt="企业微信" width={24} height={24} unoptimized />
+                    <Image className="qr-code wecom-code" src={socialLinks[1].qr!} alt="企业微信二维码" width={120} height={120} unoptimized />
                   </a>
                 </li>
                 {/* Telegram */}
                 <li>
                   <a className="focus-link tg-btn" onClick={(e) => e.preventDefault()}>
-                    <img className="icon" src={socialLinks[2].icon} alt="Telegram" />
-                    <img className="qr-code tg-code" src={socialLinks[2].qr!} alt="TG二维码" />
+                    <Image className="icon" src={socialLinks[2].icon} alt="Telegram" width={24} height={24} unoptimized />
+                    <Image className="qr-code tg-code" src={socialLinks[2].qr!} alt="TG二维码" width={120} height={120} unoptimized />
                   </a>
                 </li>
                 {/* B站 */}
                 <li>
                   <a href={socialLinks[3].href} target="_blank" rel="noopener noreferrer" className="focus-link">
-                    <img className="icon" src={socialLinks[3].icon} alt="Bilibili" />
+                    <Image className="icon" src={socialLinks[3].icon} alt="Bilibili" width={24} height={24} unoptimized />
                   </a>
                 </li>
                 {/* GitHub */}
                 <li>
                   <a href={socialLinks[4].href} target="_blank" rel="noopener noreferrer" className="focus-link">
-                    <img className="icon" src={socialLinks[4].icon} alt="GitHub" />
+                    <Image className="icon" src={socialLinks[4].icon} alt="GitHub" width={24} height={24} unoptimized />
                   </a>
                 </li>
                 {/* CNB */}
                 <li>
                   <a href={socialLinks[5].href} target="_blank" rel="noopener noreferrer" className="focus-link">
-                    <img className="icon" src={socialLinks[5].icon} alt="CNB" />
+                    <Image className="icon" src={socialLinks[5].icon} alt="CNB" width={24} height={24} unoptimized />
                   </a>
                 </li>
               </ul>
@@ -190,7 +194,7 @@ export default function Footer() {
           <p className="copyright">
             <a className="num" href="https://edgeone.ai?referer=jsdmirror.com" target="_blank" rel="noopener noreferrer">
               {t.footer.edgeone}
-              <img src="https://cos.jsdmirror.com/jsdmirror/static/img/serve/EdgeOne.png" alt="Edgeone" className="edgeone-logo" />
+              <Image src="https://cos.jsdmirror.com/jsdmirror/static/img/serve/EdgeOne.png" alt="Edgeone" className="edgeone-logo" width={80} height={20} unoptimized />
               {t.footer.sponsored}
             </a>
           </p>

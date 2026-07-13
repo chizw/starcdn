@@ -36,7 +36,6 @@ export default function Typewriter({
     textIndex.current = 0;
     charIndex.current = 0;
     isDeleting.current = false;
-    setDisplay('');
 
     const tick = () => {
       const idx = textIndex.current;
@@ -71,7 +70,11 @@ export default function Typewriter({
       }
     };
 
-    timeoutRef.current = setTimeout(tick, 300);
+    // Defer initial reset/start so setState is not synchronous in the effect body
+    timeoutRef.current = setTimeout(() => {
+      setDisplay('');
+      tick();
+    }, 300);
 
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);

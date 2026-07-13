@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useT, useLang } from '@/i18n';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -15,23 +16,30 @@ export default function Navbar() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('theme');
-    if (saved === 'light' || saved === 'dark') {
-      setTheme(saved);
-      document.documentElement.setAttribute('data-theme', saved);
-    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-      setTheme('light');
-    }
+    const timer = window.setTimeout(() => {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'light' || saved === 'dark') {
+        setTheme(saved);
+        document.documentElement.setAttribute('data-theme', saved);
+      } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+        setTheme('light');
+      }
+
+      const mqInit = window.matchMedia('(max-width: 930px)');
+      setIsMobile(mqInit.matches);
+      if (mqInit.matches) setScrolled(true);
+    }, 0);
 
     const mq = window.matchMedia('(max-width: 930px)');
-    setIsMobile(mq.matches);
-    if (mq.matches) setScrolled(true);
     const onMq = (e: MediaQueryListEvent) => {
       setIsMobile(e.matches);
       if (e.matches) setScrolled(true);
     };
     mq.addEventListener('change', onMq);
-    return () => mq.removeEventListener('change', onMq);
+    return () => {
+      window.clearTimeout(timer);
+      mq.removeEventListener('change', onMq);
+    };
   }, []);
 
   const toggleTheme = () => {
@@ -95,9 +103,9 @@ export default function Navbar() {
       <nav className={`navbar${scrolled ? ' scrolled' : ''}`} id="navbar">
         <div className="container nav-container">
           <div className="nav-brand">
-            <a href="/">
-              <img src="https://cos.jsdmirror.com/2023/08/29/logo.png" alt="JSDMirror" style={{ height: '30px' }} />
-            </a>
+            <Link href="/">
+              <Image src="https://cos.jsdmirror.com/2023/08/29/logo.png" alt="JSDMirror" width={120} height={30} style={{ height: '30px', width: 'auto' }} unoptimized />
+            </Link>
           </div>
           <ul className={`nav-links${menuOpen ? ' active' : ''}`}>
             {navLinks.map((link) => (
@@ -117,7 +125,7 @@ export default function Navbar() {
             <li>
               {lang === 'zh' ? (
                 <a href="https://cnb.cool/jsdmirror/home" target="_blank" rel="noopener noreferrer" className="nav-github">
-                  <img className="icon" src="https://cos.jsdmirror.com/images/2021/09/10/cnb.png" alt="CNB" width="18" height="18" />
+                  <Image className="icon" src="https://cos.jsdmirror.com/images/2021/09/10/cnb.png" alt="CNB" width={18} height={18} unoptimized />
                 </a>
               ) : (
                 <a href="https://github.com/jsdmirror/www.jsdmirror.com" target="_blank" rel="noopener noreferrer" className="nav-github">

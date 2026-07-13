@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ScrollReveal, ParticleBackground } from '@/components/ClientComponents';
 import SponsorLogo from '@/components/SponsorLogo';
@@ -275,7 +276,7 @@ export default function HomePage() {
                 <ScrollReveal key={i}>
                   <div className="team-card">
                     <a href={m.href} target="_blank" rel="noopener noreferrer" className="member-avatar-link">
-                      <img src={m.avatar} alt={m.name} className="member-avatar-img" />
+                      <Image src={m.avatar} alt={m.name} className="member-avatar-img" width={96} height={96} unoptimized />
                     </a>
                     <h3>{lang === 'en' && m.nameEn ? m.nameEn : m.name}</h3>
                     <span className="team-role">{lang === 'en' && m.roleEn ? m.roleEn : m.role}</span>

@@ -904,7 +904,7 @@ pause`}</CodeBlock>
               {t.docs.sriCorsText1}
               <code>Access-Control-Allow-Origin</code>
               {t.docs.sriCorsText2}
-              <code>crossorigin="anonymous"</code>
+              <code>crossorigin=&quot;anonymous&quot;</code>
               {t.docs.sriCorsText4}
             </p>
             <Tip type="warn" title={lang === 'en' ? 'Important' : '请注意'}>

@@ -3,7 +3,6 @@
 import { useLang } from '@/i18n';
 
 export default function Error({
-  error,
   reset,
 }: {
   error: Error & { digest?: string };

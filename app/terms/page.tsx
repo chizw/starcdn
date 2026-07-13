@@ -104,7 +104,7 @@ export default function TermsPage() {
                   <>
                     <div className="legal-section" id="s01">
                       <h3><span className="legal-num">01</span>总则</h3>
-                      <p>欢迎使用 JSDMirror（以下简称"本服务"）。本协议是您与 JSDMirror 之间关于使用本服务的法律协议。</p>
+                      <p>欢迎使用 JSDMirror（以下简称&quot;本服务&quot;）。本协议是您与 JSDMirror 之间关于使用本服务的法律协议。</p>
                       <p>在使用本服务前，请您务必仔细阅读并充分理解本协议的全部内容。一旦您开始使用本服务，即视为您已阅读并同意接受本协议的全部条款。</p>
                       <p>本服务由 JSDMirror 团队提供和运营。我们保留随时修改本协议的权利，修改后的协议将在本页面公布。</p>
                     </div>
@@ -121,7 +121,7 @@ export default function TermsPage() {
                     </div>
                     <div className="legal-section" id="s04">
                       <h3><span className="legal-num">04</span>免责声明</h3>
-                      <p>本服务按"现状"提供，不提供任何明示或暗示的保证。</p>
+                      <p>本服务按&quot;现状&quot;提供，不提供任何明示或暗示的保证。</p>
                       <p>我们不保证服务不会中断，不保证服务的及时性、安全性或准确性。</p>
                       <p>在法律允许的最大范围内，我们对因使用本服务而产生的任何直接或间接损失不承担责任。</p>
                     </div>

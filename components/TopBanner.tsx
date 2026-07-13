@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useT, useLang } from '@/i18n';
+import { useLang } from '@/i18n';
 
 export default function TopBanner() {
-  const t = useT();
   const { lang } = useLang();
   const [dismissed, setDismissed] = useState(false);
 

@@ -20,11 +20,14 @@ export function LanguageProvider({ children, initialLang = 'zh' }: { children: R
 
   useEffect(() => {
     // 从 cookie 同步真实语言（首次访问 cookie 由 middleware 写入）
-    const m = document.cookie.match(/(?:^|;\s*)lang=(en|zh)(?:;|$)/);
-    if (m) {
-      const cookieLang = m[1] as Language;
-      if (cookieLang !== lang) setLangState(cookieLang);
-    }
+    const timer = window.setTimeout(() => {
+      const m = document.cookie.match(/(?:^|;\s*)lang=(en|zh)(?:;|$)/);
+      if (m) {
+        const cookieLang = m[1] as Language;
+        if (cookieLang !== lang) setLangState(cookieLang);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setLang = (l: Language) => {

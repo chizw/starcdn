@@ -1,14 +1,29 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useT } from '@/i18n';
+
+type PaymentItem = {
+  icon: string;
+  name: string;
+  desc: string;
+  qr?: string;
+  link?: string;
+  linkLabel?: string;
+  bankInfo?: {
+    title: string;
+    bank: string;
+    account: string;
+  };
+};
 
 export default function SponsorPage() {
   const t = useT();
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
-  const paymentItems = [
+  const paymentItems: PaymentItem[] = [
     {
       icon: 'alipay',
       name: t.sponsor.alipay,
@@ -71,26 +86,26 @@ export default function SponsorPage() {
           <div className="payment-methods">
             {paymentItems.map((pm) => {
               const hasQr = !!pm.qr;
-              const hasLink = !!(pm as any).link;
-              const hasBank = !!(pm as any).bankInfo;
+              const hasLink = !!pm.link;
+              const hasBank = !!pm.bankInfo;
 
               return (
                 <div key={pm.icon} className={`payment-card${hasQr ? ' has-qr' : ''}`}>
                   <div className={`payment-icon ${pm.icon}`}>
                     {pm.icon === 'alipay' && (
-                      <img src="/images/alipay.png" alt={t.sponsor.alipay} style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                      <Image src="/images/alipay.png" alt={t.sponsor.alipay} width={28} height={28} style={{ objectFit: 'contain' }} />
                     )}
                     {pm.icon === 'wechat' && (
-                      <img src="/images/wechatico.png" alt={t.sponsor.wechat} style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                      <Image src="/images/wechatico.png" alt={t.sponsor.wechat} width={28} height={28} style={{ objectFit: 'contain' }} />
                     )}
                     {pm.icon === 'qq' && (
-                      <img src="/images/qq-logo.png" alt={t.sponsor.qq} style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                      <Image src="/images/qq-logo.png" alt={t.sponsor.qq} width={28} height={28} style={{ objectFit: 'contain' }} />
                     )}
                     {pm.icon === 'paypal' && (
-                      <img src="/images/pp196.png" alt={t.sponsor.paypal} style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                      <Image src="/images/pp196.png" alt={t.sponsor.paypal} width={28} height={28} style={{ objectFit: 'contain' }} />
                     )}
                     {pm.icon === 'wechat-work' && (
-                      <img src="/images/Wecomico.png" alt={t.sponsor.wecom} style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                      <Image src="/images/Wecomico.png" alt={t.sponsor.wecom} width={28} height={28} style={{ objectFit: 'contain' }} />
                     )}
                     {pm.icon === 'bank' && (
                       <i className="bi bi-bank" style={{ fontSize: 28 }} />
@@ -101,20 +116,20 @@ export default function SponsorPage() {
                     <p>{pm.desc}</p>
                   </div>
                   <div className="payment-placeholder">
-                    {hasQr ? (
-                      <button className="payment-qr-trigger" onClick={() => setLightboxSrc(pm.qr)}>
+                    {hasQr && pm.qr ? (
+                      <button className="payment-qr-trigger" onClick={() => setLightboxSrc(pm.qr!)}>
                         <i className="bi bi-qr-code" />
                         {t.sponsor.clickForQr}
                       </button>
-                    ) : hasLink ? (
-                      <a href={(pm as any).link} className="payment-link-btn">
-                        🔗 {(pm as any).linkLabel}
+                    ) : hasLink && pm.link ? (
+                      <a href={pm.link} className="payment-link-btn">
+                        🔗 {pm.linkLabel}
                       </a>
-                    ) : hasBank ? (
+                    ) : hasBank && pm.bankInfo ? (
                       <div className="payment-bank-info">
-                        <p className="bank-name">{(pm as any).bankInfo.title}</p>
-                        <p>{(pm as any).bankInfo.bank}</p>
-                        <p className="bank-account">{(pm as any).bankInfo.account}</p>
+                        <p className="bank-name">{pm.bankInfo.title}</p>
+                        <p>{pm.bankInfo.bank}</p>
+                        <p className="bank-account">{pm.bankInfo.account}</p>
                       </div>
                     ) : (
                       <span>{t.sponsor.qrPending}</span>
@@ -177,7 +192,7 @@ export default function SponsorPage() {
             <button className="qr-lightbox-close" onClick={() => setLightboxSrc(null)}>
               <i className="bi bi-x-lg" style={{ fontSize: 28 }} />
             </button>
-            <img src={lightboxSrc} alt="QR Code" className="qr-lightbox-img" />
+            <Image src={lightboxSrc} alt="QR Code" className="qr-lightbox-img" width={320} height={320} />
           </div>
         </div>
       )}

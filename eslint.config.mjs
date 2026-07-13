@@ -10,5 +10,6 @@ export default defineConfig([
     'out/**',
     'dist/**',
     'next-env.d.ts',
+    'scripts/**',
   ]),
 ]);

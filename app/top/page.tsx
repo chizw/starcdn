@@ -23,21 +23,23 @@ export default function TopPage() {
 
   // 从远程获取赞助列表
   useEffect(() => {
-    setSponsorsLoading(true);
-    fetch(SPONSOR_JSON_URL)
-      .then((res) => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then((data: Sponsor[]) => {
-        setSponsorList(data);
-        setSponsorsLoading(false);
-      })
-      .catch(() => {
-        setSponsorList([]);
-        setSponsorsError(true);
-        setSponsorsLoading(false);
-      });
+    const timer = window.setTimeout(() => {
+      fetch(SPONSOR_JSON_URL)
+        .then((res) => {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then((data: Sponsor[]) => {
+          setSponsorList(data);
+          setSponsorsLoading(false);
+        })
+        .catch(() => {
+          setSponsorList([]);
+          setSponsorsError(true);
+          setSponsorsLoading(false);
+        });
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   return (

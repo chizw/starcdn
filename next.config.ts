@@ -20,6 +20,12 @@ const createNextConfig = (phase: string): NextConfig => ({
   poweredByHeader: false,
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cos.jsdmirror.com',
+      },
+    ],
   },
 });
 
