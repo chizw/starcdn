@@ -113,7 +113,7 @@ impl Database {
         if !exists {
             let now = Utc::now().to_rfc3339();
             let hash =
-                crate::auth::hash_password(password).map_err(|err| sqlx::Error::Protocol(err))?;
+                crate::auth::hash_password(password).map_err(sqlx::Error::Protocol)?;
             sqlx::query("INSERT INTO users (username, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?)").bind(username).bind(hash).bind(&now).bind(&now).execute(&self.pool).await?;
         }
         Ok(())
