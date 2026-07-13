@@ -2,15 +2,15 @@
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 2607",
     "dev:frontend": "next dev -H 0.0.0.0 -p 2607",
-    "dev:backend": "cargo run --bin starcdn",
+    "dev:backend": "node scripts/cargo.js run --bin starcdn",
     "dev:all": "npx concurrently -k -n \"FRONTEND,BACKEND\" -c \"cyan,green\" \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "rust:test": "cargo test",
-    "rust:fmt": "cargo fmt --check",
-    "rust:clippy": "cargo clippy --all-targets -- -D warnings"
+    "rust:test": "node scripts/cargo.js test",
+    "rust:fmt": "node scripts/cargo.js fmt --check",
+    "rust:clippy": "node scripts/cargo.js clippy --all-targets -- -D warnings"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.2",

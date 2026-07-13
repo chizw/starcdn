@@ -35,3 +35,5 @@ coverage/
 
 .data/
 target/
+target-*/
+.cargo/
